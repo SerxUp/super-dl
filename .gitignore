@@ -6,6 +6,7 @@ __pycache__/
 .mypy_cache/
 build/
 dist/
+*.spec.bak
 .venv/
 venv/
 .env
