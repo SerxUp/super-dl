@@ -13,6 +13,7 @@ import yt_dlp
 from PySide6.QtCore import QObject, Signal, Slot
 from yt_dlp.utils import DownloadCancelled, DownloadError, ExtractorError
 
+from super_dl.core.formats import FormatSpec
 from super_dl.core.paths import ffmpeg_path
 
 logger = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ class ErrorKind(Enum):
 
 @dataclass(frozen=True)
 class DownloadRequest:
-    url: str
-    format_selector: str
+    urls: tuple[str, ...]
+    format_spec: FormatSpec
     output_dir: Path
 
 
@@ -92,7 +93,9 @@ class YtDlpWorker(QObject):
     state_changed = Signal(object)                # WorkerState
     progress = Signal(int, object, object, object)  # downloaded, total|None, speed|None, eta|None
     log_line = Signal(int, str)                   # logging level, message
-    finished = Signal(object)                     # output_path: Path | None
+    item_started = Signal(int, int, str)          # index (1-based), total, url
+    item_finished = Signal(int, object)           # index (1-based), output_path | None
+    finished = Signal(object)                     # list[Path] of completed item outputs
     failed = Signal(object, str, str)             # ErrorKind, message, traceback
 
     def __init__(self) -> None:
@@ -107,62 +110,83 @@ class YtDlpWorker(QObject):
     @Slot(object)
     def start(self, request: DownloadRequest) -> None:
         self._cancel_event.clear()
-        self._set_state(WorkerState.EXTRACTING)
-        last_filepath: Path | None = None
+        completed: list[Path] = []
+        total_items = len(request.urls)
 
-        def progress_hook(d: dict) -> None:
-            nonlocal last_filepath
+        for idx, url in enumerate(request.urls, start=1):
             if self._cancel_event.is_set():
-                raise DownloadCancelled
-            status = d.get("status")
-            if status == "downloading":
-                if self._state != WorkerState.DOWNLOADING:
-                    self._set_state(WorkerState.DOWNLOADING)
-                total = d.get("total_bytes") or d.get("total_bytes_estimate")
-                self.progress.emit(
-                    int(d.get("downloaded_bytes") or 0),
-                    int(total) if total else None,
-                    d.get("speed"),
-                    d.get("eta"),
-                )
-            elif status == "finished":
-                fp = d.get("filename")
-                if fp:
-                    last_filepath = Path(fp)
+                self._set_state(WorkerState.CANCELLED)
+                self.finished.emit(completed)
+                return
 
-        def postprocessor_hook(d: dict) -> None:
-            if self._cancel_event.is_set():
-                raise DownloadCancelled
-            if d.get("status") == "started":
-                self._set_state(WorkerState.POSTPROCESSING)
+            self.item_started.emit(idx, total_items, url)
+            self._set_state(WorkerState.EXTRACTING)
+            captured: list[Path | None] = [None]
 
-        ydl_opts = {
-            "format": request.format_selector,
-            "outtmpl": str(request.output_dir / "%(title)s.%(ext)s"),
-            "ffmpeg_location": ffmpeg_path(),
-            "progress_hooks": [progress_hook],
-            "postprocessor_hooks": [postprocessor_hook],
-            "logger": _YdlLogAdapter(self.log_line.emit),
-            "noprogress": True,
-            "quiet": True,
-        }
+            def progress_hook(d: dict, _captured: list = captured) -> None:
+                if self._cancel_event.is_set():
+                    raise DownloadCancelled
+                status = d.get("status")
+                if status == "downloading":
+                    if self._state != WorkerState.DOWNLOADING:
+                        self._set_state(WorkerState.DOWNLOADING)
+                    total = d.get("total_bytes") or d.get("total_bytes_estimate")
+                    self.progress.emit(
+                        int(d.get("downloaded_bytes") or 0),
+                        int(total) if total else None,
+                        d.get("speed"),
+                        d.get("eta"),
+                    )
+                elif status == "finished":
+                    fp = d.get("filename")
+                    if fp:
+                        _captured[0] = Path(fp)
 
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([request.url])
-        except DownloadCancelled:
-            self._set_state(WorkerState.CANCELLED)
-            self.finished.emit(None)
-            return
-        except (DownloadError, ExtractorError, OSError) as e:
-            self._fail(_classify(e), str(e))
-            return
-        except Exception as e:  # noqa: BLE001 — catch-all to keep worker alive
-            self._fail(ErrorKind.UNKNOWN, str(e) or type(e).__name__)
-            return
+            def postprocessor_hook(d: dict) -> None:
+                if self._cancel_event.is_set():
+                    raise DownloadCancelled
+                if d.get("status") == "started":
+                    self._set_state(WorkerState.POSTPROCESSING)
+
+            ydl_opts: dict = {
+                "format": request.format_spec.selector,
+                "outtmpl": str(request.output_dir / "%(title)s.%(ext)s"),
+                "ffmpeg_location": ffmpeg_path(),
+                "progress_hooks": [progress_hook],
+                "postprocessor_hooks": [postprocessor_hook],
+                "logger": _YdlLogAdapter(self.log_line.emit),
+                "noprogress": True,
+                "quiet": True,
+            }
+            if request.format_spec.merge_output_format:
+                ydl_opts["merge_output_format"] = request.format_spec.merge_output_format
+            if request.format_spec.postprocessors:
+                ydl_opts["postprocessors"] = list(request.format_spec.postprocessors)
+
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            except DownloadCancelled:
+                self._set_state(WorkerState.CANCELLED)
+                self.item_finished.emit(idx, None)
+                self.finished.emit(completed)
+                return
+            except (DownloadError, ExtractorError, OSError) as e:
+                self.item_finished.emit(idx, None)
+                self._fail(_classify(e), str(e))
+                return
+            except Exception as e:  # noqa: BLE001 — catch-all to keep worker alive
+                self.item_finished.emit(idx, None)
+                self._fail(ErrorKind.UNKNOWN, str(e) or type(e).__name__)
+                return
+
+            item_path = captured[0]
+            if item_path is not None:
+                completed.append(item_path)
+            self.item_finished.emit(idx, item_path)
 
         self._set_state(WorkerState.DONE)
-        self.finished.emit(last_filepath)
+        self.finished.emit(completed)
 
     def _set_state(self, new: WorkerState) -> None:
         self._state = new
