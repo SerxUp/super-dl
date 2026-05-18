@@ -13,13 +13,28 @@ from super_dl.core.downloader import (
     YtDlpWorker,
     _classify,
 )
+from super_dl.core.formats import FormatSpec
 
 
 def test_download_request_holds_values(tmp_path: Path):
-    req = DownloadRequest(url="https://example.com", format_selector="ba/b", output_dir=tmp_path)
-    assert req.url == "https://example.com"
-    assert req.format_selector == "ba/b"
+    spec = FormatSpec("ba/b")
+    req = DownloadRequest(
+        urls=("https://example.com/a", "https://example.com/b"),
+        format_spec=spec,
+        output_dir=tmp_path,
+    )
+    assert req.urls == ("https://example.com/a", "https://example.com/b")
+    assert req.format_spec is spec
     assert req.output_dir == tmp_path
+
+
+def test_download_request_accepts_single_url_tuple(tmp_path: Path):
+    req = DownloadRequest(
+        urls=("https://example.com",),
+        format_spec=FormatSpec("bv*+ba/b"),
+        output_dir=tmp_path,
+    )
+    assert len(req.urls) == 1
 
 
 def test_worker_state_values_are_unique():
