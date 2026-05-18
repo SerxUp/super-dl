@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QFontDatabase
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QPlainTextEdit,
     QProgressBar,
     QPushButton,
     QTextEdit,
@@ -31,7 +32,10 @@ from super_dl.core.formats import FormatPreset, resolve_format
 
 _PRESET_LABELS: list[tuple[str, str]] = [
     ("Best video + audio", FormatPreset.BEST_VIDEO_AUDIO.value),
+    ("MP4 up to 720p", FormatPreset.MP4_720P.value),
+    ("MP4 up to 1080p", FormatPreset.MP4_1080P.value),
     ("Best audio only", FormatPreset.BEST_AUDIO.value),
+    ("MP3 (audio extract)", FormatPreset.MP3_AUDIO.value),
     ("Custom format string", FormatPreset.CUSTOM.value),
 ]
 
@@ -71,6 +75,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("super-dl")
         self.resize(config.window_width, config.window_height)
 
+        self._mono_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self._build_ui()
         self._apply_config()
         self._setup_worker()
@@ -83,9 +88,14 @@ class MainWindow(QMainWindow):
         root = QVBoxLayout(central)
 
         url_row = QHBoxLayout()
-        url_row.addWidget(QLabel("URL:"))
-        self.url_edit = QLineEdit()
-        self.url_edit.setPlaceholderText("https://...")
+        url_label = QLabel("URLs:")
+        url_label.setAlignment(Qt.AlignTop)
+        url_row.addWidget(url_label)
+        self.url_edit = QPlainTextEdit()
+        self.url_edit.setFont(self._mono_font)
+        self.url_edit.setPlaceholderText("One URL per line\nhttps://...")
+        fm = self.url_edit.fontMetrics()
+        self.url_edit.setFixedHeight(fm.lineSpacing() * 4 + 12)
         url_row.addWidget(self.url_edit, 1)
         root.addLayout(url_row)
 
@@ -97,6 +107,7 @@ class MainWindow(QMainWindow):
         self.format_combo.currentIndexChanged.connect(self._on_preset_changed)
         fmt_row.addWidget(self.format_combo)
         self.custom_edit = QLineEdit()
+        self.custom_edit.setFont(self._mono_font)
         self.custom_edit.setPlaceholderText("e.g. bv[height<=720]+ba")
         fmt_row.addWidget(self.custom_edit, 1)
         root.addLayout(fmt_row)
@@ -104,6 +115,7 @@ class MainWindow(QMainWindow):
         out_row = QHBoxLayout()
         out_row.addWidget(QLabel("Output:"))
         self.output_edit = QLineEdit()
+        self.output_edit.setFont(self._mono_font)
         out_row.addWidget(self.output_edit, 1)
         browse = QPushButton("Browse…")
         browse.clicked.connect(self._on_browse)
@@ -113,9 +125,19 @@ class MainWindow(QMainWindow):
         action_row = QHBoxLayout()
         self.action_btn = QPushButton("Download")
         self.action_btn.clicked.connect(self._on_action)
+        action_row.addStretch(1)
         action_row.addWidget(self.action_btn)
         action_row.addStretch(1)
+        action_row.setContentsMargins(0, 8, 0, 0)
+        f = self.action_btn.font()
+        f.setPointSize(12)
+        self.action_btn.setFont(f)
+
         root.addLayout(action_row)
+
+        self.overall_label = QLabel("")
+        self.overall_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        root.addWidget(self.overall_label)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
@@ -148,6 +170,8 @@ class MainWindow(QMainWindow):
         self._worker.state_changed.connect(self._apply_state)
         self._worker.progress.connect(self._on_progress)
         self._worker.log_line.connect(self._on_log)
+        self._worker.item_started.connect(self._on_item_started)
+        self._worker.item_finished.connect(self._on_item_finished)
         self._worker.finished.connect(self._on_finished)
         self._worker.failed.connect(self._on_failed)
 
@@ -175,9 +199,11 @@ class MainWindow(QMainWindow):
             self._start_download()
 
     def _start_download(self) -> None:
-        url = self.url_edit.text().strip()
-        if not url:
-            QMessageBox.warning(self, "super-dl", "Please enter a URL.")
+        urls = tuple(
+            line.strip() for line in self.url_edit.toPlainText().splitlines() if line.strip()
+        )
+        if not urls:
+            QMessageBox.warning(self, "super-dl", "Please enter at least one URL.")
             return
 
         out = Path(self.output_edit.text()).expanduser()
@@ -189,16 +215,15 @@ class MainWindow(QMainWindow):
 
         preset = self.format_combo.currentData()
         custom = self.custom_edit.text()
-        selector = resolve_format(preset, custom)
+        spec = resolve_format(preset, custom)
 
         self._config.output_dir = str(out)
         self._config.format_preset = preset
         self._config.custom_format = custom
 
         self.log_view.clear()
-        self.request_download.emit(
-            DownloadRequest(url=url, format_selector=selector, output_dir=out)
-        )
+        self.overall_label.setText("")
+        self.request_download.emit(DownloadRequest(urls=urls, format_spec=spec, output_dir=out))
 
     # --- Worker signal handlers --------------------------------------------
 
@@ -229,7 +254,7 @@ class MainWindow(QMainWindow):
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(100)
-            self.status_label.setText("Done.")
+            self.status_label.setText("<b>SUCCESS!</b>")
         elif state == WorkerState.ERROR:
             self.action_btn.setText("Download")
             self.action_btn.setEnabled(True)
@@ -240,7 +265,7 @@ class MainWindow(QMainWindow):
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(0)
-            self.status_label.setText("Cancelled.")
+            self.status_label.setText("<b>Cancelled.</b>")
 
     def _on_progress(
         self,
@@ -266,18 +291,27 @@ class MainWindow(QMainWindow):
         prefix = logging.getLevelName(level).lower()
         self.log_view.append(f"[{prefix}] {message}")
 
-    def _on_finished(self, output_path: Path | None) -> None:
+    def _on_item_started(self, index: int, total: int, url: str) -> None:
+        self.overall_label.setText(f"Item {index} / {total}")
+        self.log_view.append(f"[info] starting ({index}/{total}): {url}")
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setValue(0)
+
+    def _on_item_finished(self, _index: int, output_path: Path | None) -> None:
         if output_path:
             self.log_view.append(f"[info] saved: {output_path}")
 
+    def _on_finished(self, output_paths: list[Path]) -> None:
+        if output_paths:
+            self.log_view.append(f"[info] queue done — {len(output_paths)} file(s) saved")
+
     def _on_failed(self, kind: ErrorKind, message: str, traceback_str: str) -> None:
-        self.status_label.setText(f"Error: {message}")
+        self.status_label.setText(f"<b>Error:</b> {message}")
         self.log_view.append(f"[error] {message}")
         hint = ""
         if kind == ErrorKind.EXTRACTOR:
             hint = (
-                "\n\nThis often means yt-dlp needs an update — the site's "
-                "format may have changed."
+                "\n\nThis often means yt-dlp needs an update — the site's format may have changed."
             )
         QMessageBox.critical(self, "super-dl", message + hint)
 
