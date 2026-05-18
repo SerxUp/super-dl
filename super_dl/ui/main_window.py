@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QFontDatabase
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("super-dl")
         self.resize(config.window_width, config.window_height)
 
+        self._mono_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self._build_ui()
         self._apply_config()
         self._setup_worker()
@@ -91,6 +92,7 @@ class MainWindow(QMainWindow):
         url_label.setAlignment(Qt.AlignTop)
         url_row.addWidget(url_label)
         self.url_edit = QPlainTextEdit()
+        self.url_edit.setFont(self._mono_font)
         self.url_edit.setPlaceholderText("One URL per line\nhttps://...")
         fm = self.url_edit.fontMetrics()
         self.url_edit.setFixedHeight(fm.lineSpacing() * 4 + 12)
@@ -105,6 +107,7 @@ class MainWindow(QMainWindow):
         self.format_combo.currentIndexChanged.connect(self._on_preset_changed)
         fmt_row.addWidget(self.format_combo)
         self.custom_edit = QLineEdit()
+        self.custom_edit.setFont(self._mono_font)
         self.custom_edit.setPlaceholderText("e.g. bv[height<=720]+ba")
         fmt_row.addWidget(self.custom_edit, 1)
         root.addLayout(fmt_row)
@@ -112,6 +115,7 @@ class MainWindow(QMainWindow):
         out_row = QHBoxLayout()
         out_row.addWidget(QLabel("Output:"))
         self.output_edit = QLineEdit()
+        self.output_edit.setFont(self._mono_font)
         out_row.addWidget(self.output_edit, 1)
         browse = QPushButton("Browse…")
         browse.clicked.connect(self._on_browse)
@@ -250,7 +254,7 @@ class MainWindow(QMainWindow):
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(100)
-            self.status_label.setText("SUCCESS!")
+            self.status_label.setText("<b>SUCCESS!</b>")
         elif state == WorkerState.ERROR:
             self.action_btn.setText("Download")
             self.action_btn.setEnabled(True)
@@ -261,7 +265,7 @@ class MainWindow(QMainWindow):
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(0)
-            self.status_label.setText("Cancelled.")
+            self.status_label.setText("<b>Cancelled.</b>")
 
     def _on_progress(
         self,
@@ -302,7 +306,7 @@ class MainWindow(QMainWindow):
             self.log_view.append(f"[info] queue done — {len(output_paths)} file(s) saved")
 
     def _on_failed(self, kind: ErrorKind, message: str, traceback_str: str) -> None:
-        self.status_label.setText(f"Error: {message}")
+        self.status_label.setText(f"<b>Error:</b> {message}")
         self.log_view.append(f"[error] {message}")
         hint = ""
         if kind == ErrorKind.EXTRACTOR:
