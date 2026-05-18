@@ -36,3 +36,9 @@ def bundle_root() -> Path:
     if is_frozen():
         return Path(sys._MEIPASS)  # type: ignore[attr-defined]
     return Path(__file__).resolve().parent.parent
+
+
+def ffmpeg_path() -> str:
+    import imageio_ffmpeg
+
+    return imageio_ffmpeg.get_ffmpeg_exe()
