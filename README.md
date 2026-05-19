@@ -76,6 +76,10 @@ super-dl
 | ffmpeg | [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) |
 | Config/log paths | [platformdirs](https://github.com/platformdirs/platformdirs) |
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
+
 ## License
 
 LGPL-2.1 (inherited from PySide6). See [LICENSE](LICENSE).
