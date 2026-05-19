@@ -22,6 +22,9 @@ class AppConfig:
     subfolder_per_url: bool = False
     window_width: int = 720
     window_height: int = 480
+    check_updates_on_startup: bool = True
+    skip_version: str | None = None
+    last_update_check_iso: str | None = None
 
     @classmethod
     def path(cls) -> Path:
