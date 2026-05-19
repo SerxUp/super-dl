@@ -1,10 +1,19 @@
-# super-dl
+<div align="center">
+
+[<img src="super_dl/resources/icon.ico" width="128" alt="super-dl">](#readme)
+
+# Super DL
 
 Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp/yt-dlp). Paste a URL, pick a format, download. No system ffmpeg required.
 
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
-![PySide6](https://img.shields.io/badge/UI-PySide6-green)
-![License: LGPL](https://img.shields.io/badge/license-LGPL-lightgrey)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge)](#requirements "Requirements")
+[![PySide6](https://img.shields.io/badge/UI-PySide6-green?style=for-the-badge)](#stack "Stack")
+[![License: LGPL](https://img.shields.io/badge/license-LGPL-lightgrey?style=for-the-badge)](LICENSE "License")
+[![Release](https://img.shields.io/github/v/release/sergioadam/super-dl?color=brightgreen&label=Download&style=for-the-badge)](#installation "Installation")
+
+[Features](#features) &bull; [Requirements](#requirements) &bull; [Installation](#installation) &bull; [Usage](#usage) &bull; [Development](#development) &bull; [Stack](#stack) &bull; [Roadmap](#roadmap) &bull; [License](#license)
+
+</div>
 
 ## Features
 
