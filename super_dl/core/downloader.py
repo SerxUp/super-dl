@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import traceback
@@ -12,6 +13,7 @@ from pathlib import Path
 import yt_dlp
 from PySide6.QtCore import QObject, Signal, Slot
 from yt_dlp.utils import DownloadCancelled, DownloadError, ExtractorError
+from yt_dlp.utils import Popen as _YdlPopen
 
 from super_dl.core.formats import FormatSpec
 from super_dl.core.paths import ffmpeg_path
@@ -106,10 +108,21 @@ class YtDlpWorker(QObject):
         super().__init__()
         self._cancel_event = threading.Event()
         self._state = WorkerState.IDLE
+        # Subprocesses (ffmpeg, etc.) spawned by yt-dlp during the active item.
+        # Populated via a scoped Popen patch in start(); read by cancel() to
+        # terminate in-flight post-processing without waiting for hook ticks.
+        self._active_procs: set[_YdlPopen] = set()
+        self._procs_lock = threading.Lock()
 
     def cancel(self) -> None:
-        # Thread-safe: just sets an Event. The next progress_hook tick aborts.
+        # Thread-safe: sets an Event for hook-driven aborts, and terminates any
+        # tracked subprocesses so ffmpeg post-processing cancels immediately.
         self._cancel_event.set()
+        with self._procs_lock:
+            procs = list(self._active_procs)
+        for p in procs:
+            with contextlib.suppress(Exception):
+                p.terminate()
 
     @Slot(object)
     def start(self, request: DownloadRequest) -> None:
@@ -166,6 +179,12 @@ class YtDlpWorker(QObject):
                 "logger": _YdlLogAdapter(self.log_line.emit),
                 "noprogress": True,
                 "quiet": True,
+                # Bound the extraction-phase worst case so cancel and failure
+                # paths regain control quickly when the network stalls.
+                "socket_timeout": 15,
+                "retries": 2,
+                "fragment_retries": 2,
+                "extractor_retries": 2,
             }
             if request.format_spec.merge_output_format:
                 ydl_opts["merge_output_format"] = request.format_spec.merge_output_format
@@ -173,20 +192,24 @@ class YtDlpWorker(QObject):
                 ydl_opts["postprocessors"] = list(request.format_spec.postprocessors)
 
             try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                with self._track_subprocesses(), yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
             except DownloadCancelled:
                 self._set_state(WorkerState.CANCELLED)
                 self.item_finished.emit(idx, None)
                 self.finished.emit(completed)
                 return
-            except (DownloadError, ExtractorError, OSError) as e:
+            except Exception as e:  # noqa: BLE001 — consolidated catch-all
+                if self._cancel_event.is_set():
+                    self._set_state(WorkerState.CANCELLED)
+                    self.item_finished.emit(idx, None)
+                    self.finished.emit(completed)
+                    return
                 self.item_finished.emit(idx, None)
-                self._fail(_classify(e), str(e))
-                return
-            except Exception as e:  # noqa: BLE001 — catch-all to keep worker alive
-                self.item_finished.emit(idx, None)
-                self._fail(ErrorKind.UNKNOWN, str(e) or type(e).__name__)
+                if isinstance(e, (DownloadError, ExtractorError, OSError)):
+                    self._fail(_classify(e), str(e))
+                else:
+                    self._fail(ErrorKind.UNKNOWN, str(e) or type(e).__name__)
                 return
 
             item_path = captured[0]
@@ -196,6 +219,29 @@ class YtDlpWorker(QObject):
 
         self._set_state(WorkerState.DONE)
         self.finished.emit(completed)
+
+    @contextlib.contextmanager
+    def _track_subprocesses(self):
+        """Patch yt_dlp.utils.Popen for the lifetime of one ydl.download() call
+        so that ffmpeg (and any other subprocess yt-dlp launches via its Popen
+        subclass) is registered in `self._active_procs` and can be terminated
+        synchronously by `cancel()`."""
+        orig_init = _YdlPopen.__init__
+        active = self._active_procs
+        lock = self._procs_lock
+
+        def tracked_init(proc_self, *args, **kwargs):
+            orig_init(proc_self, *args, **kwargs)
+            with lock:
+                active.add(proc_self)
+
+        _YdlPopen.__init__ = tracked_init
+        try:
+            yield
+        finally:
+            _YdlPopen.__init__ = orig_init
+            with lock:
+                active.clear()
 
     def _set_state(self, new: WorkerState) -> None:
         self._state = new
