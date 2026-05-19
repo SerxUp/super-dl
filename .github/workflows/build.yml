@@ -23,10 +23,10 @@ jobs:
             artifact_name: super-dl-windows
             asset_path: dist/super-dl.exe
             asset_name: super-dl.exe
-          - os: macos-latest
-            artifact_name: super-dl-macos
-            asset_path: dist/super-dl.app
-            asset_name: super-dl-macos.zip
+          - os: macos-14
+            artifact_name: super-dl-macos-arm64
+            asset_path: dist/super-dl-macos-arm64.zip
+            asset_name: super-dl-macos-arm64.zip
           - os: ubuntu-latest
             artifact_name: super-dl-linux
             asset_path: dist/super-dl
@@ -80,7 +80,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           cd dist
-          zip -r super-dl-macos.zip super-dl.app
+          zip -r super-dl-macos-arm64.zip super-dl.app
           rm -rf super-dl.app
 
       - name: Upload artifact
@@ -91,7 +91,7 @@ jobs:
             dist/super-dl.exe
             dist/super-dl-setup-*.exe
             dist/super-dl
-            dist/super-dl-macos.zip
+            dist/super-dl-macos-arm64.zip
           if-no-files-found: ignore
 
   release:

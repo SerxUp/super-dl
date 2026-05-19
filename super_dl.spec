@@ -6,8 +6,14 @@ from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
+is_darwin = sys.platform == "darwin"
+
+icon_path = "super_dl/resources/icon.icns" if is_darwin else "super_dl/resources/icon.ico"
+
 datas = collect_data_files("imageio_ffmpeg")
 datas += [("super_dl/resources/icon.ico", "super_dl/resources")]
+if is_darwin:
+    datas += [("super_dl/resources/icon.icns", "super_dl/resources")]
 
 a = Analysis(
     ["super_dl/__main__.py"],
@@ -31,7 +37,7 @@ exe = EXE(
     a.datas,
     [],
     name="super-dl",
-    icon="super_dl/resources/icon.ico",
+    icon=icon_path,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -39,19 +45,21 @@ exe = EXE(
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
+    target_arch="arm64" if is_darwin else None,
     codesign_identity=None,
     entitlements_file=None,
 )
 
-if sys.platform == "darwin":
+if is_darwin:
     app = BUNDLE(
         exe,
         name="super-dl.app",
+        icon="super_dl/resources/icon.icns",
         bundle_identifier="dev.super-dl.app",
         info_plist={
             "CFBundleShortVersionString": "0.1.0",
             "CFBundleVersion": "0.1.0",
+            "CFBundleIconFile": "icon.icns",
             "NSHighResolutionCapable": True,
         },
     )
