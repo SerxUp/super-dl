@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QCloseEvent, QFontDatabase
+from PySide6.QtGui import QAction, QCloseEvent, QDesktopServices, QFontDatabase
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -21,7 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from super_dl import APP_NAME
+from super_dl import APP_NAME, __version__
 from super_dl.core.config import AppConfig
 from super_dl.core.downloader import (
     DownloadRequest,
@@ -30,6 +31,11 @@ from super_dl.core.downloader import (
     YtDlpWorker,
 )
 from super_dl.core.formats import FormatPreset, resolve_format
+from super_dl.core.updater import UpdateInfo
+from super_dl.ui.about_dialog import AboutDialog
+from super_dl.ui.update_worker import UpdateWorker
+
+_UPDATE_CHECK_INTERVAL = timedelta(hours=24)
 
 _PRESET_LABELS: list[tuple[str, str]] = [
     ("Best video + audio", FormatPreset.BEST_VIDEO_AUDIO.value),
@@ -77,10 +83,15 @@ class MainWindow(QMainWindow):
         self.resize(config.window_width, config.window_height)
 
         self._mono_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        self._update_thread: QThread | None = None
+        self._update_worker: UpdateWorker | None = None
+        self._update_check_manual = False
         self._build_ui()
+        self._build_menu()
         self._apply_config()
         self._setup_worker()
         self._apply_state(WorkerState.IDLE)
+        self._maybe_check_updates_on_startup()
 
     # --- UI construction ----------------------------------------------------
 
@@ -153,6 +164,26 @@ class MainWindow(QMainWindow):
         root.addWidget(self.log_view, 1)
 
         self.setCentralWidget(central)
+
+    def _build_menu(self) -> None:
+        menubar = self.menuBar()
+        options_menu = menubar.addMenu("&Options")
+
+        check_updates_action = QAction("Check for &updates…", self)
+        check_updates_action.triggered.connect(self._on_check_updates)
+        options_menu.addAction(check_updates_action)
+
+        self._auto_check_action = QAction("Check for updates on startup", self)
+        self._auto_check_action.setCheckable(True)
+        self._auto_check_action.setChecked(self._config.check_updates_on_startup)
+        self._auto_check_action.toggled.connect(self._on_toggle_auto_check)
+        options_menu.addAction(self._auto_check_action)
+
+        options_menu.addSeparator()
+
+        about_action = QAction(f"&About {APP_NAME}", self)
+        about_action.triggered.connect(self._on_about)
+        options_menu.addAction(about_action)
 
     def _apply_config(self) -> None:
         self.output_edit.setText(self._config.output_dir)
@@ -316,6 +347,105 @@ class MainWindow(QMainWindow):
             )
         QMessageBox.critical(self, APP_NAME, message + hint)
 
+    # --- Update check -------------------------------------------------------
+
+    def _maybe_check_updates_on_startup(self) -> None:
+        if not self._config.check_updates_on_startup:
+            return
+        last = self._config.last_update_check_iso
+        if last:
+            try:
+                last_dt = datetime.fromisoformat(last)
+            except ValueError:
+                last_dt = None
+            if last_dt and datetime.now(timezone.utc) - last_dt < _UPDATE_CHECK_INTERVAL:
+                return
+        self._start_update_check(manual=False)
+
+    def _on_check_updates(self) -> None:
+        self._start_update_check(manual=True)
+
+    def _on_toggle_auto_check(self, checked: bool) -> None:
+        self._config.check_updates_on_startup = checked
+
+    def _start_update_check(self, *, manual: bool) -> None:
+        if self._update_thread is not None:
+            if manual:
+                QMessageBox.information(self, APP_NAME, "An update check is already in progress.")
+            return
+
+        self._update_check_manual = manual
+        self._update_thread = QThread(self)
+        self._update_worker = UpdateWorker(__version__)
+        self._update_worker.moveToThread(self._update_thread)
+        self._update_thread.started.connect(self._update_worker.run)
+        self._update_worker.finished.connect(self._on_update_finished)
+        self._update_worker.failed.connect(self._on_update_failed)
+        self._update_thread.start()
+
+    def _cleanup_update_thread(self) -> None:
+        if self._update_thread is not None:
+            self._update_thread.quit()
+            self._update_thread.wait(2000)
+            self._update_thread = None
+            self._update_worker = None
+
+    def _on_update_finished(self, info: UpdateInfo) -> None:
+        manual = self._update_check_manual
+        self._config.last_update_check_iso = datetime.now(timezone.utc).isoformat()
+        self._cleanup_update_thread()
+
+        if not info.is_newer:
+            if manual:
+                QMessageBox.information(
+                    self,
+                    APP_NAME,
+                    f"You're up to date.\n\nCurrent version: {info.current}",
+                )
+            return
+
+        if not manual and info.latest == self._config.skip_version:
+            return
+
+        self._prompt_update(info, manual=manual)
+
+    def _on_update_failed(self, message: str) -> None:
+        manual = self._update_check_manual
+        self._cleanup_update_thread()
+        if manual:
+            QMessageBox.warning(self, APP_NAME, f"Could not check for updates:\n{message}")
+
+    def _prompt_update(self, info: UpdateInfo, *, manual: bool) -> None:
+        box = QMessageBox(self)
+        box.setWindowTitle(APP_NAME)
+        box.setIcon(QMessageBox.Icon.Information)
+        box.setTextFormat(Qt.TextFormat.RichText)
+        box.setText(
+            f"<b>A new version is available.</b><br><br>"
+            f"Current: {info.current}<br>"
+            f"Latest: <b>{info.latest}</b>"
+        )
+        notes = info.notes.strip()
+        if notes:
+            box.setInformativeText(notes[:600] + ("…" if len(notes) > 600 else ""))
+        view_btn = box.addButton("View release", QMessageBox.ButtonRole.AcceptRole)
+        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
+        skip_btn = None
+        if not manual:
+            skip_btn = box.addButton("Skip this version", QMessageBox.ButtonRole.DestructiveRole)
+        box.setDefaultButton(view_btn)
+        box.exec()
+
+        clicked = box.clickedButton()
+        if clicked is view_btn:
+            QDesktopServices.openUrl(info.url)  # type: ignore[arg-type]
+        elif skip_btn is not None and clicked is skip_btn:
+            self._config.skip_version = info.latest
+        # later_btn: do nothing
+
+    def _on_about(self) -> None:
+        AboutDialog(self).exec()
+
     # --- Lifecycle ----------------------------------------------------------
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 — Qt API
@@ -325,4 +455,5 @@ class MainWindow(QMainWindow):
             self._worker.cancel()
             self._thread.quit()
             self._thread.wait(2000)
+        self._cleanup_update_thread()
         super().closeEvent(event)
