@@ -22,6 +22,12 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 
 ## Installation
 
+### Windows (recommended)
+
+Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/sergioadam/super-dl/releases/latest) and run it. The wizard installs per-user — no admin password required — and registers an uninstaller in *Apps & features*.
+
+### From source
+
 ```powershell
 git clone https://github.com/sergioadam/super-dl.git
 cd super-dl
@@ -69,6 +75,10 @@ super-dl
 | Downloader | [yt-dlp](https://github.com/yt-dlp/yt-dlp) |
 | ffmpeg | [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) |
 | Config/log paths | [platformdirs](https://github.com/platformdirs/platformdirs) |
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
 ## License
 

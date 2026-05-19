@@ -67,6 +67,15 @@ jobs:
       - name: Build (PyInstaller)
         run: pyinstaller super_dl.spec --noconfirm
 
+      - name: Build Windows installer (Inno Setup)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $env:GITHUB_REF -replace '^refs/tags/v', ''
+          } else { '0.0.0-dev' }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" installer\super-dl.iss
+
       - name: Package macOS .app as zip
         if: runner.os == 'macOS'
         run: |
@@ -80,6 +89,7 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: |
             dist/super-dl.exe
+            dist/super-dl-setup-*.exe
             dist/super-dl
             dist/super-dl-macos.zip
           if-no-files-found: ignore
