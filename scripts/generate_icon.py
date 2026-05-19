@@ -1,9 +1,12 @@
-"""Generate a placeholder app icon for super-dl.
+"""Generate placeholder app icons for super-dl.
 
 Renders a flat-color square with a "DL" glyph at multiple sizes, packs
-them into a Windows .ico (PNG-encoded entries) at super_dl/resources/icon.ico.
+them into:
 
-Replace with a real designed icon by overwriting that file.
+  - ``super_dl/resources/icon.ico`` (Windows / cross-platform Qt runtime)
+  - ``super_dl/resources/icon.icns`` (macOS .app bundle metadata)
+
+Replace with real designed icons by overwriting those files.
 
 Usage:
     python scripts/generate_icon.py
@@ -20,7 +23,19 @@ from PySide6.QtCore import QBuffer, QIODevice, QRect, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen
 from PySide6.QtWidgets import QApplication
 
-SIZES = (16, 32, 48, 64, 128, 256)
+ICO_SIZES = (16, 32, 48, 64, 128, 256)
+ICNS_SIZES = (16, 32, 128, 256, 512)
+
+# Apple icns PNG-typed entry codes. Sizes without a mapping here are
+# skipped when writing the .icns container.
+ICNS_TYPE_CODES: dict[int, bytes] = {
+    16: b"ic04",
+    32: b"ic05",
+    128: b"ic07",
+    256: b"ic08",
+    512: b"ic09",
+}
+
 BG = QColor("#2563eb")
 FG = QColor("#ffffff")
 ACCENT = QColor("#1e40af")
@@ -70,13 +85,40 @@ def pack_ico(pngs: dict[int, bytes]) -> bytes:
     return out.getvalue()
 
 
+def pack_icns(pngs: dict[int, bytes]) -> bytes:
+    # icns container: 8-byte header (magic + total length, big-endian uint32),
+    # then a sequence of typed chunks: 4-byte OSType + 4-byte big-endian uint32
+    # length (including the 8-byte chunk header) + payload bytes.
+    chunks = BytesIO()
+    for size in sorted(pngs):
+        code = ICNS_TYPE_CODES.get(size)
+        if code is None:
+            continue
+        data = pngs[size]
+        chunks.write(code)
+        chunks.write(struct.pack(">I", 8 + len(data)))
+        chunks.write(data)
+    body = chunks.getvalue()
+    total = 8 + len(body)
+    return b"icns" + struct.pack(">I", total) + body
+
+
 def main() -> int:
     QApplication(sys.argv)
-    pngs = {s: render(s) for s in SIZES}
-    out = Path(__file__).resolve().parent.parent / "super_dl" / "resources" / "icon.ico"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(pack_ico(pngs))
-    print(f"Wrote {out} ({out.stat().st_size} bytes, sizes={list(SIZES)})")
+
+    resources = Path(__file__).resolve().parent.parent / "super_dl" / "resources"
+    resources.mkdir(parents=True, exist_ok=True)
+
+    ico_pngs = {s: render(s) for s in ICO_SIZES}
+    ico_path = resources / "icon.ico"
+    ico_path.write_bytes(pack_ico(ico_pngs))
+    print(f"Wrote {ico_path} ({ico_path.stat().st_size} bytes, sizes={list(ICO_SIZES)})")
+
+    icns_pngs = {s: render(s) for s in ICNS_SIZES}
+    icns_path = resources / "icon.icns"
+    icns_path.write_bytes(pack_icns(icns_pngs))
+    print(f"Wrote {icns_path} ({icns_path.stat().st_size} bytes, sizes={list(ICNS_SIZES)})")
+
     return 0
 
 

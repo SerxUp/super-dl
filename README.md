@@ -35,6 +35,21 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 
 Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/SerxUp/super-dl/releases/latest) and run it. The wizard installs per-user — no admin rights required — and registers an uninstaller in *Apps & features*.
 
+### macOS (Apple Silicon)
+
+Download `super-dl-macos-arm64.zip` from the [latest release](https://github.com/SerxUp/super-dl/releases/latest), unzip, and drag `super-dl.app` to `/Applications`.
+
+First launch is blocked by Gatekeeper because the build is unsigned. Either:
+
+- **Right-click the app → Open**, then click **Open** in the dialog. macOS remembers the choice.
+- Or strip the quarantine attribute from a terminal:
+
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/super-dl.app
+  ```
+
+Intel Macs are not supported.
+
 ### From source
 
 ```powershell
