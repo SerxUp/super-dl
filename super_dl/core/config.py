@@ -19,6 +19,7 @@ class AppConfig:
     output_dir: str = field(default_factory=lambda: str(default_download_dir()))
     format_preset: str = "best_video_audio"  # best_video_audio | best_audio | custom
     custom_format: str = ""
+    subfolder_per_url: bool = False
     window_width: int = 720
     window_height: int = 480
     check_updates_on_startup: bool = True

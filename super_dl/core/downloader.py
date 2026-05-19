@@ -41,6 +41,10 @@ class DownloadRequest:
     urls: tuple[str, ...]
     format_spec: FormatSpec
     output_dir: Path
+    subfolder_per_url: bool = False
+
+
+_SUBFOLDER_TEMPLATE = "%(playlist_title,channel,uploader,title)s"
 
 
 def _classify(exc: BaseException) -> ErrorKind:
@@ -148,9 +152,14 @@ class YtDlpWorker(QObject):
                 if d.get("status") == "started":
                     self._set_state(WorkerState.POSTPROCESSING)
 
+            outtmpl_path = (
+                request.output_dir / _SUBFOLDER_TEMPLATE / "%(title)s.%(ext)s"
+                if request.subfolder_per_url
+                else request.output_dir / "%(title)s.%(ext)s"
+            )
             ydl_opts: dict = {
                 "format": request.format_spec.selector,
-                "outtmpl": str(request.output_dir / "%(title)s.%(ext)s"),
+                "outtmpl": str(outtmpl_path),
                 "ffmpeg_location": ffmpeg_path(),
                 "progress_hooks": [progress_hook],
                 "postprocessor_hooks": [postprocessor_hook],
