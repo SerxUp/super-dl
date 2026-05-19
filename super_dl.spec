@@ -7,6 +7,7 @@ from PyInstaller.utils.hooks import collect_data_files
 block_cipher = None
 
 datas = collect_data_files("imageio_ffmpeg")
+datas += [("super_dl/resources/icon.ico", "super_dl/resources")]
 
 a = Analysis(
     ["super_dl/__main__.py"],
@@ -30,6 +31,7 @@ exe = EXE(
     a.datas,
     [],
     name="super-dl",
+    icon="super_dl/resources/icon.ico",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

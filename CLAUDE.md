@@ -71,3 +71,5 @@ The download worker is a `QObject` (`YtDlpWorker`) moved onto a dedicated `QThre
 
 - PyInstaller per OS, built via GitHub Actions matrix (`windows-latest`, `macos-latest`, `ubuntu-latest`).
 - Manual yt-dlp version bumps when extractors break — no automated release pipeline for v1.
+- App icon lives at `super_dl/resources/icon.ico` and is wired into the PyInstaller spec (`EXE(icon=...)`) and the runtime via `QApplication.setWindowIcon`. Regenerate the placeholder with `python scripts/generate_icon.py`; replace the file directly when a real designed icon exists.
+- When a Windows installer ships, document the SmartScreen workaround in README: first-run users see a "Windows protected your PC" dialog because the binary is unsigned — they click **More info → Run anyway**. Code signing is deferred; revisit (Azure Trusted Signing, ~$10/mo) once user count justifies it.
