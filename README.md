@@ -33,7 +33,7 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 
 ### Windows (recommended)
 
-Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/sergioadam/super-dl/releases/latest) and run it. The wizard installs per-user — no admin password required — and registers an uninstaller in *Apps & features*.
+Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/sergioadam/super-dl/releases) and run it. The wizard installs per-user — no admin password required — and registers an uninstaller in *Apps & features*.
 
 ### From source
 
