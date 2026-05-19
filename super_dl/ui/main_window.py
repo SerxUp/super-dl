@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from super_dl import APP_NAME
 from super_dl.core.config import AppConfig
 from super_dl.core.downloader import (
     DownloadRequest,
@@ -72,7 +73,7 @@ class MainWindow(QMainWindow):
         self._config = config
         self._state = WorkerState.IDLE
 
-        self.setWindowTitle("super-dl")
+        self.setWindowTitle(APP_NAME)
         self.resize(config.window_width, config.window_height)
 
         self._mono_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
@@ -203,14 +204,14 @@ class MainWindow(QMainWindow):
             line.strip() for line in self.url_edit.toPlainText().splitlines() if line.strip()
         )
         if not urls:
-            QMessageBox.warning(self, "super-dl", "Please enter at least one URL.")
+            QMessageBox.warning(self, APP_NAME, "Please enter at least one URL.")
             return
 
         out = Path(self.output_edit.text()).expanduser()
         try:
             out.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            QMessageBox.critical(self, "super-dl", f"Cannot create output directory:\n{e}")
+            QMessageBox.critical(self, APP_NAME, f"Cannot create output directory:\n{e}")
             return
 
         preset = self.format_combo.currentData()
@@ -313,7 +314,7 @@ class MainWindow(QMainWindow):
             hint = (
                 "\n\nThis often means yt-dlp needs an update — the site's format may have changed."
             )
-        QMessageBox.critical(self, "super-dl", message + hint)
+        QMessageBox.critical(self, APP_NAME, message + hint)
 
     # --- Lifecycle ----------------------------------------------------------
 

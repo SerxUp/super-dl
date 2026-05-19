@@ -11,11 +11,19 @@ Create a GitHub pull request for the current branch.
 
 3. Draft the PR using the rules below.
 
-4. Run:
+4. Pick the default label from the current branch name (via `git rev-parse --abbrev-ref HEAD`):
+   - `feat/*` → `minor feature`
+   - `fix/*` → `bug`
+   - Any other prefix → no `--label` flag; ask the user if a label is wanted.
+
+   If the user passed an explicit label in `ARGUMENTS` (e.g. `label 'major feature'`), use that instead of the branch-derived default.
+
+5. Run:
    ```
    gh pr create \
      --base main \
      --assignee SerxUp \
+     --label "<label>" \
      --title "<title>" \
      --body "$(cat <<'EOF'
    <body>
@@ -23,7 +31,9 @@ Create a GitHub pull request for the current branch.
    )"
    ```
 
-5. Return the PR URL.
+   Omit `--label` entirely if no label applies.
+
+6. Return the PR URL.
 
 ---
 
