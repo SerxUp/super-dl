@@ -33,12 +33,12 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 
 ### Windows (recommended)
 
-Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/sergioadam/super-dl/releases) and run it. The wizard installs per-user — no admin password required — and registers an uninstaller in *Apps & features*.
+Download `super-dl-setup-X.Y.Z.exe` from the [latest release](https://github.com/SerxUp/super-dl/releases/latest) and run it. The wizard installs per-user — no admin rights required — and registers an uninstaller in *Apps & features*.
 
 ### From source
 
 ```powershell
-git clone https://github.com/sergioadam/super-dl.git
+git clone https://github.com/SerxUp/super-dl.git
 cd super-dl
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
