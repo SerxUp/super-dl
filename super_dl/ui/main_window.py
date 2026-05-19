@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QCloseEvent, QFontDatabase
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFileDialog,
     QHBoxLayout,
@@ -16,6 +18,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QSystemTrayIcon,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -42,6 +45,10 @@ _PRESET_LABELS: list[tuple[str, str]] = [
 
 _BUSY_STATES = {WorkerState.EXTRACTING, WorkerState.DOWNLOADING, WorkerState.POSTPROCESSING}
 
+_COLOR_SUCCESS = "#1aa64b"
+_COLOR_ERROR = "#c92a2a"
+_COLOR_CANCEL = "#d97706"
+
 
 def _fmt_bytes(n: float | None) -> str:
     if n is None:
@@ -58,10 +65,13 @@ def _fmt_speed(s: float | None) -> str:
     return f"{_fmt_bytes(s)}/s" if s else "—"
 
 
-def _fmt_eta(eta: int | None) -> str:
-    if eta is None:
+def _fmt_duration(seconds: int | None) -> str:
+    if seconds is None or seconds < 0:
         return "—"
-    m, s = divmod(int(eta), 60)
+    h, rem = divmod(int(seconds), 3600)
+    m, s = divmod(rem, 60)
+    if h:
+        return f"{h}:{m:02d}:{s:02d}"
     return f"{m}:{s:02d}"
 
 
@@ -73,6 +83,12 @@ class MainWindow(QMainWindow):
         self._config = config
         self._state = WorkerState.IDLE
 
+        # Queue progress tracking
+        self._queue_total = 0
+        self._queue_completed = 0
+        self._queue_start: float | None = None
+        self._current_item_fraction = 0.0
+
         self.setWindowTitle(APP_NAME)
         self.resize(config.window_width, config.window_height)
 
@@ -80,6 +96,12 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._apply_config()
         self._setup_worker()
+        self._setup_tray()
+
+        self._queue_timer = QTimer(self)
+        self._queue_timer.setInterval(1000)
+        self._queue_timer.timeout.connect(self._refresh_queue_label)
+
         self._apply_state(WorkerState.IDLE)
 
     # --- UI construction ----------------------------------------------------
@@ -123,6 +145,13 @@ class MainWindow(QMainWindow):
         out_row.addWidget(browse)
         root.addLayout(out_row)
 
+        opt_row = QHBoxLayout()
+        opt_row.addSpacing(self.fontMetrics().horizontalAdvance("Output: "))
+        self.subfolder_check = QCheckBox("Create subfolder per URL (playlist / channel / title)")
+        opt_row.addWidget(self.subfolder_check)
+        opt_row.addStretch(1)
+        root.addLayout(opt_row)
+
         action_row = QHBoxLayout()
         self.action_btn = QPushButton("Download")
         self.action_btn.clicked.connect(self._on_action)
@@ -139,6 +168,14 @@ class MainWindow(QMainWindow):
         self.overall_label = QLabel("")
         self.overall_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         root.addWidget(self.overall_label)
+
+        self.overall_bar = QProgressBar()
+        self.overall_bar.setRange(0, 100)
+        self.overall_bar.setValue(0)
+        self.overall_bar.setTextVisible(True)
+        self.overall_bar.setFormat("Queue %v / %m")
+        self.overall_bar.setVisible(False)
+        root.addWidget(self.overall_bar)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
@@ -160,6 +197,7 @@ class MainWindow(QMainWindow):
         if idx >= 0:
             self.format_combo.setCurrentIndex(idx)
         self.custom_edit.setText(self._config.custom_format)
+        self.subfolder_check.setChecked(self._config.subfolder_per_url)
         self._on_preset_changed()
 
     def _setup_worker(self) -> None:
@@ -177,6 +215,24 @@ class MainWindow(QMainWindow):
         self._worker.failed.connect(self._on_failed)
 
         self._thread.start()
+
+    def _setup_tray(self) -> None:
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self._tray: QSystemTrayIcon | None = QSystemTrayIcon(self.windowIcon(), self)
+            self._tray.setToolTip(APP_NAME)
+            self._tray.show()
+        else:
+            self._tray = None
+
+    def _notify(
+        self,
+        title: str,
+        message: str,
+        icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information,
+    ) -> None:
+        if self._tray is None or not self._tray.supportsMessages():
+            return
+        self._tray.showMessage(title, message, icon, 5000)
 
     # --- Slots --------------------------------------------------------------
 
@@ -217,14 +273,33 @@ class MainWindow(QMainWindow):
         preset = self.format_combo.currentData()
         custom = self.custom_edit.text()
         spec = resolve_format(preset, custom)
+        subfolder = self.subfolder_check.isChecked()
 
         self._config.output_dir = str(out)
         self._config.format_preset = preset
         self._config.custom_format = custom
+        self._config.subfolder_per_url = subfolder
+
+        self._queue_total = len(urls)
+        self._queue_completed = 0
+        self._queue_start = time.monotonic()
+        self._current_item_fraction = 0.0
+
+        self.overall_bar.setRange(0, self._queue_total)
+        self.overall_bar.setValue(0)
+        self.overall_bar.setVisible(self._queue_total > 1)
 
         self.log_view.clear()
         self.overall_label.setText("")
-        self.request_download.emit(DownloadRequest(urls=urls, format_spec=spec, output_dir=out))
+        self._queue_timer.start()
+        self.request_download.emit(
+            DownloadRequest(
+                urls=urls,
+                format_spec=spec,
+                output_dir=out,
+                subfolder_per_url=subfolder,
+            )
+        )
 
     # --- Worker signal handlers --------------------------------------------
 
@@ -255,18 +330,26 @@ class MainWindow(QMainWindow):
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(100)
-            self.status_label.setText("<b>SUCCESS!</b>")
+            self.overall_bar.setValue(self.overall_bar.maximum())
+            self.status_label.setText(
+                f"<span style='color:{_COLOR_SUCCESS};font-weight:bold;'>SUCCESS!</span>"
+            )
+            self._queue_timer.stop()
         elif state == WorkerState.ERROR:
             self.action_btn.setText("Download")
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
-            # status text is set by _on_failed
+            self._queue_timer.stop()
+            # status text set by _on_failed
         elif state == WorkerState.CANCELLED:
             self.action_btn.setText("Download")
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(0)
-            self.status_label.setText("<b>Cancelled.</b>")
+            self.status_label.setText(
+                f"<span style='color:{_COLOR_CANCEL};font-weight:bold;'>Cancelled.</span>"
+            )
+            self._queue_timer.stop()
 
     def _on_progress(
         self,
@@ -280,47 +363,101 @@ class MainWindow(QMainWindow):
                 self.progress_bar.setRange(0, 100)
             pct = max(0, min(100, int(downloaded * 100 / total)))
             self.progress_bar.setValue(pct)
+            self._current_item_fraction = max(0.0, min(1.0, downloaded / total))
             self.status_label.setText(
                 f"{_fmt_bytes(downloaded)} / {_fmt_bytes(total)}   "
-                f"{_fmt_speed(speed)}   ETA {_fmt_eta(eta)}"
+                f"{_fmt_speed(speed)}   item ETA {_fmt_duration(eta)}"
             )
         else:
             self.progress_bar.setRange(0, 0)
             self.status_label.setText(f"{_fmt_bytes(downloaded)}   {_fmt_speed(speed)}")
+        self._refresh_queue_label()
 
     def _on_log(self, level: int, message: str) -> None:
         prefix = logging.getLevelName(level).lower()
         self.log_view.append(f"[{prefix}] {message}")
 
     def _on_item_started(self, index: int, total: int, url: str) -> None:
-        self.overall_label.setText(f"Item {index} / {total}")
+        self._current_item_fraction = 0.0
+        if self._queue_total != total:
+            self._queue_total = total
+            self.overall_bar.setRange(0, total)
+            self.overall_bar.setVisible(total > 1)
+        self.overall_bar.setValue(index - 1)
         self.log_view.append(f"[info] starting ({index}/{total}): {url}")
         self.progress_bar.setRange(0, 0)
         self.progress_bar.setValue(0)
+        self._refresh_queue_label()
 
     def _on_item_finished(self, _index: int, output_path: Path | None) -> None:
         if output_path:
+            self._queue_completed += 1
             self.log_view.append(f"[info] saved: {output_path}")
+        self._current_item_fraction = 0.0
+        self.overall_bar.setValue(self._queue_completed)
+        self._refresh_queue_label()
 
     def _on_finished(self, output_paths: list[Path]) -> None:
-        if output_paths:
-            self.log_view.append(f"[info] queue done — {len(output_paths)} file(s) saved")
+        self._queue_timer.stop()
+        n = len(output_paths)
+        if n:
+            self.log_view.append(f"[info] queue done — {n} file(s) saved")
+        if self._state == WorkerState.CANCELLED:
+            if n:
+                self._notify(
+                    "Downloads cancelled",
+                    f"Partial: {n} file(s) saved before cancel.",
+                    QSystemTrayIcon.MessageIcon.Warning,
+                )
+            return
+        if n:
+            self._notify(
+                "Downloads complete",
+                f"{n} file(s) saved to {self.output_edit.text()}",
+            )
 
     def _on_failed(self, kind: ErrorKind, message: str, traceback_str: str) -> None:
-        self.status_label.setText(f"<b>Error:</b> {message}")
+        self._queue_timer.stop()
+        self.status_label.setText(
+            f"<span style='color:{_COLOR_ERROR};font-weight:bold;'>Error:</span> {message}"
+        )
         self.log_view.append(f"[error] {message}")
         hint = ""
         if kind == ErrorKind.EXTRACTOR:
             hint = (
                 "\n\nThis often means yt-dlp needs an update — the site's format may have changed."
             )
+        self._notify(
+            "Download failed",
+            message,
+            QSystemTrayIcon.MessageIcon.Critical,
+        )
         QMessageBox.critical(self, APP_NAME, message + hint)
+
+    def _refresh_queue_label(self) -> None:
+        if self._queue_total == 0 or self._queue_start is None:
+            self.overall_label.setText("")
+            return
+        elapsed = time.monotonic() - self._queue_start
+        effective = self._queue_completed + self._current_item_fraction
+        if 0.05 < effective < self._queue_total:
+            eta = elapsed / effective * (self._queue_total - effective)
+            eta_txt = _fmt_duration(int(eta))
+        else:
+            eta_txt = "—"
+        self.overall_label.setText(
+            f"<b>Queue:</b> {self._queue_completed} / {self._queue_total}"
+            f" &nbsp;·&nbsp; elapsed {_fmt_duration(int(elapsed))}"
+            f" &nbsp;·&nbsp; ETA {eta_txt}"
+        )
 
     # --- Lifecycle ----------------------------------------------------------
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 — Qt API
         self._config.window_width = self.width()
         self._config.window_height = self.height()
+        if self._tray is not None:
+            self._tray.hide()
         if self._thread.isRunning():
             self._worker.cancel()
             self._thread.quit()
