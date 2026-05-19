@@ -67,6 +67,13 @@ jobs:
       - name: Build (PyInstaller)
         run: pyinstaller super_dl.spec --noconfirm
 
+      - name: Package Windows portable as zip
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd dist
+          Compress-Archive -Path super-dl.exe -DestinationPath super-dl-windows-portable.zip
+
       - name: Build Windows installer (Inno Setup)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -88,7 +95,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            dist/super-dl.exe
+            dist/super-dl-windows-portable.zip
             dist/super-dl-setup-*.exe
             dist/super-dl
             dist/super-dl-macos-arm64.zip
