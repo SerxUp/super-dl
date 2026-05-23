@@ -51,7 +51,7 @@
     <message>
         <location filename="../../ui/about_dialog.py" line="70"/>
         <source>GUI toolkit (LGPL)</source>
-        <translation>kit d'interface (LGPL)</translation>
+        <translation>kit d&apos;interface (LGPL)</translation>
     </message>
     <message>
         <location filename="../../ui/about_dialog.py" line="71"/>
@@ -130,12 +130,12 @@ https://...</translation>
     <message>
         <location filename="../../ui/main_window.py" line="210"/>
         <source>MP4 up to 720p</source>
-        <translation>MP4 jusqu'à 720p</translation>
+        <translation>MP4 jusqu&apos;à 720p</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="211"/>
         <source>MP4 up to 1080p</source>
-        <translation>MP4 jusqu'à 1080p</translation>
+        <translation>MP4 jusqu&apos;à 1080p</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="212"/>
@@ -278,8 +278,8 @@ https://...</translation>
         <location filename="../../ui/main_window.py" line="498"/>
         <source>Partial: %n file(s) saved before cancel.</source>
         <translation>
-            <numerusform>Partiel : %n fichier enregistré avant l'annulation.</numerusform>
-            <numerusform>Partiel : %n fichiers enregistrés avant l'annulation.</numerusform>
+            <numerusform>Partiel : %n fichier enregistré avant l&apos;annulation.</numerusform>
+            <numerusform>Partiel : %n fichiers enregistrés avant l&apos;annulation.</numerusform>
         </translation>
     </message>
     <message>
