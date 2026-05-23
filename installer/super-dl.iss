@@ -3,7 +3,7 @@
 ; CI passes /DAppVersion from the tag; local builds fall back to the value below.
 
 #ifndef AppVersion
-  #define AppVersion "0.2.2"
+  #define AppVersion "0.3.0"
 #endif
 
 [Setup]
