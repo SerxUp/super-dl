@@ -25,6 +25,7 @@ class AppConfig:
     check_updates_on_startup: bool = True
     skip_version: str | None = None
     last_update_check_iso: str | None = None
+    ui_language: str = ""
 
     @classmethod
     def path(cls) -> Path:
