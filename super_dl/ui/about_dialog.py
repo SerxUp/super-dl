@@ -39,7 +39,7 @@ def _load_icon_pixmap(size: int = 64) -> QPixmap:
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(f"About {APP_NAME}")
+        self.setWindowTitle(self.tr("About {app}").format(app=APP_NAME))
         self.setModal(True)
 
         root = QVBoxLayout(self)
@@ -57,28 +57,41 @@ class AboutDialog(QDialog):
         text.setOpenExternalLinks(True)
         text.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         text.setWordWrap(True)
+        version_html = self.tr("Version {version}").format(version=f"<b>{__version__}</b>")
+        wrapper_html = self.tr(
+            "Lightweight cross-platform GUI wrapper around {ytdlp_link}."
+        ).format(ytdlp_link="<a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a>")
+        created_html = self.tr("Created by {author}").format(author=f"<b>{APP_AUTHOR}</b>")
+        homepage_label = self.tr("Homepage")
+        issue_label = self.tr("Report an issue")
+        releases_label = self.tr("Releases")
+        credits_label = self.tr("Credits")
+        engine_label = self.tr("download engine")
+        gui_label = self.tr("GUI toolkit (LGPL)")
+        ffmpeg_label = self.tr("bundled ffmpeg binary")
+        paths_label = self.tr("cross-platform paths")
+        license_label = self.tr("Licensed under LGPL-2.1 (inherited from PySide6).")
         text.setText(
             f"<h2 style='margin:0'>{APP_NAME}</h2>"
-            f"<p style='margin:4px 0'>Version <b>{__version__}</b></p>"
-            "<p style='margin:4px 0'>Lightweight cross-platform GUI wrapper around "
-            "<a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a>.</p>"
-            f"<p style='margin:8px 0 2px'>Created by <b>{APP_AUTHOR}</b></p>"
+            f"<p style='margin:4px 0'>{version_html}</p>"
+            f"<p style='margin:4px 0'>{wrapper_html}</p>"
+            f"<p style='margin:8px 0 2px'>{created_html}</p>"
             "<p style='margin:2px 0'>"
-            f"<a href='{APP_HOMEPAGE}'>Homepage</a> &nbsp;&middot;&nbsp; "
-            f"<a href='{APP_ISSUES_URL}'>Report an issue</a> &nbsp;&middot;&nbsp; "
-            f"<a href='{APP_HOMEPAGE}/releases'>Releases</a>"
+            f"<a href='{APP_HOMEPAGE}'>{homepage_label}</a> &nbsp;&middot;&nbsp; "
+            f"<a href='{APP_ISSUES_URL}'>{issue_label}</a> &nbsp;&middot;&nbsp; "
+            f"<a href='{APP_HOMEPAGE}/releases'>{releases_label}</a>"
             "</p>"
-            "<p style='margin:8px 0 2px'><b>Credits</b></p>"
+            f"<p style='margin:8px 0 2px'><b>{credits_label}</b></p>"
             "<ul style='margin:2px 0 0 16px;padding:0'>"
-            "<li><a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a> — download engine</li>"
-            "<li><a href='https://doc.qt.io/qtforpython/'>PySide6</a> — GUI toolkit (LGPL)</li>"
-            "<li><a href='https://github.com/imageio/imageio-ffmpeg'>imageio-ffmpeg</a> — "
-            "bundled ffmpeg binary</li>"
-            "<li><a href='https://github.com/platformdirs/platformdirs'>platformdirs</a> — "
-            "cross-platform paths</li>"
+            f"<li><a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a> — {engine_label}</li>"
+            f"<li><a href='https://doc.qt.io/qtforpython/'>PySide6</a> — {gui_label}</li>"
+            f"<li><a href='https://github.com/imageio/imageio-ffmpeg'>imageio-ffmpeg</a> — "
+            f"{ffmpeg_label}</li>"
+            f"<li><a href='https://github.com/platformdirs/platformdirs'>platformdirs</a> — "
+            f"{paths_label}</li>"
             "</ul>"
             "<p style='margin:8px 0 0;color:gray;font-size:small'>"
-            "Licensed under LGPL-2.1 (inherited from PySide6)."
+            f"{license_label}"
             "</p>"
         )
         header.addWidget(text, 1)

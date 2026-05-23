@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
-from PySide6.QtGui import QAction, QCloseEvent, QDesktopServices, QFontDatabase
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QFontDatabase
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -40,13 +40,13 @@ from super_dl.ui.update_worker import UpdateWorker
 
 _UPDATE_CHECK_INTERVAL = timedelta(hours=24)
 
-_PRESET_LABELS: list[tuple[str, str]] = [
-    ("Best video + audio", FormatPreset.BEST_VIDEO_AUDIO.value),
-    ("MP4 up to 720p", FormatPreset.MP4_720P.value),
-    ("MP4 up to 1080p", FormatPreset.MP4_1080P.value),
-    ("Best audio only", FormatPreset.BEST_AUDIO.value),
-    ("MP3 (audio extract)", FormatPreset.MP3_AUDIO.value),
-    ("Custom format string", FormatPreset.CUSTOM.value),
+_PRESET_VALUES: list[str] = [
+    FormatPreset.BEST_VIDEO_AUDIO.value,
+    FormatPreset.MP4_720P.value,
+    FormatPreset.MP4_1080P.value,
+    FormatPreset.BEST_AUDIO.value,
+    FormatPreset.MP3_AUDIO.value,
+    FormatPreset.CUSTOM.value,
 ]
 
 _BUSY_STATES = {WorkerState.EXTRACTING, WorkerState.DOWNLOADING, WorkerState.POSTPROCESSING}
@@ -122,49 +122,51 @@ class MainWindow(QMainWindow):
         root = QVBoxLayout(central)
 
         url_row = QHBoxLayout()
-        url_label = QLabel("URLs:")
+        url_label = QLabel(self.tr("URLs:"))
         url_label.setAlignment(Qt.AlignTop)
         url_row.addWidget(url_label)
         self.url_edit = QPlainTextEdit()
         self.url_edit.setFont(self._mono_font)
-        self.url_edit.setPlaceholderText("One URL per line\nhttps://...")
+        self.url_edit.setPlaceholderText(self.tr("One URL per line\nhttps://..."))
         fm = self.url_edit.fontMetrics()
         self.url_edit.setFixedHeight(fm.lineSpacing() * 4 + 12)
         url_row.addWidget(self.url_edit, 1)
         root.addLayout(url_row)
 
         fmt_row = QHBoxLayout()
-        fmt_row.addWidget(QLabel("Format:"))
+        fmt_row.addWidget(QLabel(self.tr("Format:")))
         self.format_combo = QComboBox()
-        for label, value in _PRESET_LABELS:
+        for label, value in zip(self._preset_labels(), _PRESET_VALUES, strict=True):
             self.format_combo.addItem(label, value)
         self.format_combo.currentIndexChanged.connect(self._on_preset_changed)
         fmt_row.addWidget(self.format_combo)
         self.custom_edit = QLineEdit()
         self.custom_edit.setFont(self._mono_font)
-        self.custom_edit.setPlaceholderText("e.g. bv[height<=720]+ba")
+        self.custom_edit.setPlaceholderText(self.tr("e.g. bv[height<=720]+ba"))
         fmt_row.addWidget(self.custom_edit, 1)
         root.addLayout(fmt_row)
 
         out_row = QHBoxLayout()
-        out_row.addWidget(QLabel("Output:"))
+        out_row.addWidget(QLabel(self.tr("Output:")))
         self.output_edit = QLineEdit()
         self.output_edit.setFont(self._mono_font)
         out_row.addWidget(self.output_edit, 1)
-        browse = QPushButton("Browse…")
+        browse = QPushButton(self.tr("Browse…"))
         browse.clicked.connect(self._on_browse)
         out_row.addWidget(browse)
         root.addLayout(out_row)
 
         opt_row = QHBoxLayout()
         opt_row.addSpacing(self.fontMetrics().horizontalAdvance("Output: "))
-        self.subfolder_check = QCheckBox("Create subfolder per URL (playlist / channel / title)")
+        self.subfolder_check = QCheckBox(
+            self.tr("Create subfolder per URL (playlist / channel / title)")
+        )
         opt_row.addWidget(self.subfolder_check)
         opt_row.addStretch(1)
         root.addLayout(opt_row)
 
         action_row = QHBoxLayout()
-        self.action_btn = QPushButton("Download")
+        self.action_btn = QPushButton(self.tr("Download"))
         self.action_btn.clicked.connect(self._on_action)
         action_row.addStretch(1)
         action_row.addWidget(self.action_btn)
@@ -184,7 +186,7 @@ class MainWindow(QMainWindow):
         self.overall_bar.setRange(0, 100)
         self.overall_bar.setValue(0)
         self.overall_bar.setTextVisible(True)
-        self.overall_bar.setFormat("Queue %v / %m")
+        self.overall_bar.setFormat(self.tr("Queue %v / %m"))
         self.overall_bar.setVisible(False)
         root.addWidget(self.overall_bar)
 
@@ -202,25 +204,62 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central)
 
+    def _preset_labels(self) -> list[str]:
+        return [
+            self.tr("Best video + audio"),
+            self.tr("MP4 up to 720p"),
+            self.tr("MP4 up to 1080p"),
+            self.tr("Best audio only"),
+            self.tr("MP3 (audio extract)"),
+            self.tr("Custom format string"),
+        ]
+
     def _build_menu(self) -> None:
         menubar = self.menuBar()
-        options_menu = menubar.addMenu("&Options")
+        options_menu = menubar.addMenu(self.tr("&Options"))
 
-        check_updates_action = QAction("Check for &updates…", self)
+        check_updates_action = QAction(self.tr("Check for &updates…"), self)
         check_updates_action.triggered.connect(self._on_check_updates)
         options_menu.addAction(check_updates_action)
 
-        self._auto_check_action = QAction("Check for updates on startup", self)
+        self._auto_check_action = QAction(self.tr("Check for updates on startup"), self)
         self._auto_check_action.setCheckable(True)
         self._auto_check_action.setChecked(self._config.check_updates_on_startup)
         self._auto_check_action.toggled.connect(self._on_toggle_auto_check)
         options_menu.addAction(self._auto_check_action)
 
+        lang_menu = options_menu.addMenu(self.tr("&Language"))
+        lang_group = QActionGroup(self)
+        lang_group.setExclusive(True)
+        for code, display in (
+            ("", self.tr("System default")),
+            ("en", "English"),
+            ("es", "Español"),
+            ("fr", "Français"),
+        ):
+            act = QAction(display, self, checkable=True)
+            act.setData(code)
+            act.setChecked(code == self._config.ui_language)
+            act.triggered.connect(lambda _checked=False, c=code: self._on_set_language(c))
+            lang_group.addAction(act)
+            lang_menu.addAction(act)
+
         options_menu.addSeparator()
 
-        about_action = QAction(f"&About {APP_NAME}", self)
+        about_action = QAction(self.tr("&About {app}").format(app=APP_NAME), self)
         about_action.triggered.connect(self._on_about)
         options_menu.addAction(about_action)
+
+    def _on_set_language(self, code: str) -> None:
+        if code == self._config.ui_language:
+            return
+        self._config.ui_language = code
+        self._config.save()
+        QMessageBox.information(
+            self,
+            APP_NAME,
+            self.tr("Language change takes effect after restart."),
+        )
 
     def _apply_config(self) -> None:
         self.output_edit.setText(self._config.output_dir)
@@ -273,7 +312,7 @@ class MainWindow(QMainWindow):
 
     def _on_browse(self) -> None:
         d = QFileDialog.getExistingDirectory(
-            self, "Choose output directory", self.output_edit.text()
+            self, self.tr("Choose output directory"), self.output_edit.text()
         )
         if d:
             self.output_edit.setText(d)
@@ -281,7 +320,7 @@ class MainWindow(QMainWindow):
     def _on_action(self) -> None:
         if self._state in _BUSY_STATES:
             self._worker.cancel()
-            self.status_label.setText("Cancelling…")
+            self.status_label.setText(self.tr("Cancelling…"))
             self.action_btn.setEnabled(False)
         else:
             self._start_download()
@@ -291,14 +330,16 @@ class MainWindow(QMainWindow):
             line.strip() for line in self.url_edit.toPlainText().splitlines() if line.strip()
         )
         if not urls:
-            QMessageBox.warning(self, APP_NAME, "Please enter at least one URL.")
+            QMessageBox.warning(self, APP_NAME, self.tr("Please enter at least one URL."))
             return
 
         out = Path(self.output_edit.text()).expanduser()
         try:
             out.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            QMessageBox.critical(self, APP_NAME, f"Cannot create output directory:\n{e}")
+            QMessageBox.critical(
+                self, APP_NAME, self.tr("Cannot create output directory:\n{error}").format(error=e)
+            )
             return
 
         preset = self.format_combo.currentData()
@@ -337,48 +378,50 @@ class MainWindow(QMainWindow):
     def _apply_state(self, state: WorkerState) -> None:
         self._state = state
         if state == WorkerState.IDLE:
-            self.action_btn.setText("Download")
+            self.action_btn.setText(self.tr("Download"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(0)
             self.status_label.setText("")
         elif state == WorkerState.EXTRACTING:
-            self.action_btn.setText("Cancel")
+            self.action_btn.setText(self.tr("Cancel"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 0)
-            self.status_label.setText("Fetching metadata…")
+            self.status_label.setText(self.tr("Fetching metadata…"))
         elif state == WorkerState.DOWNLOADING:
-            self.action_btn.setText("Cancel")
+            self.action_btn.setText(self.tr("Cancel"))
             self.action_btn.setEnabled(True)
-            self.status_label.setText("Downloading…")
+            self.status_label.setText(self.tr("Downloading…"))
         elif state == WorkerState.POSTPROCESSING:
-            self.action_btn.setText("Cancel")
+            self.action_btn.setText(self.tr("Cancel"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 0)
-            self.status_label.setText("Post-processing…")
+            self.status_label.setText(self.tr("Post-processing…"))
         elif state == WorkerState.DONE:
-            self.action_btn.setText("Download")
+            self.action_btn.setText(self.tr("Download"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(100)
             self.overall_bar.setValue(self.overall_bar.maximum())
+            success_label = self.tr("SUCCESS!")
             self.status_label.setText(
-                f"<span style='color:{_COLOR_SUCCESS};font-weight:bold;'>SUCCESS!</span>"
+                f"<span style='color:{_COLOR_SUCCESS};font-weight:bold;'>{success_label}</span>"
             )
             self._queue_timer.stop()
         elif state == WorkerState.ERROR:
-            self.action_btn.setText("Download")
+            self.action_btn.setText(self.tr("Download"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self._queue_timer.stop()
             # status text set by _on_failed
         elif state == WorkerState.CANCELLED:
-            self.action_btn.setText("Download")
+            self.action_btn.setText(self.tr("Download"))
             self.action_btn.setEnabled(True)
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(0)
+            cancelled_label = self.tr("Cancelled.")
             self.status_label.setText(
-                f"<span style='color:{_COLOR_CANCEL};font-weight:bold;'>Cancelled.</span>"
+                f"<span style='color:{_COLOR_CANCEL};font-weight:bold;'>{cancelled_label}</span>"
             )
             self._queue_timer.stop()
 
@@ -396,12 +439,20 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(pct)
             self._current_item_fraction = max(0.0, min(1.0, downloaded / total))
             self.status_label.setText(
-                f"{_fmt_bytes(downloaded)} / {_fmt_bytes(total)}   "
-                f"{_fmt_speed(speed)}   item ETA {_fmt_duration(eta)}"
+                self.tr("{downloaded} / {total}   {speed}   item ETA {eta}").format(
+                    downloaded=_fmt_bytes(downloaded),
+                    total=_fmt_bytes(total),
+                    speed=_fmt_speed(speed),
+                    eta=_fmt_duration(eta),
+                )
             )
         else:
             self.progress_bar.setRange(0, 0)
-            self.status_label.setText(f"{_fmt_bytes(downloaded)}   {_fmt_speed(speed)}")
+            self.status_label.setText(
+                self.tr("{downloaded}   {speed}").format(
+                    downloaded=_fmt_bytes(downloaded), speed=_fmt_speed(speed)
+                )
+            )
         self._refresh_queue_label()
 
     def _on_log(self, level: int, message: str) -> None:
@@ -415,7 +466,12 @@ class MainWindow(QMainWindow):
             self.overall_bar.setRange(0, total)
             self.overall_bar.setVisible(total > 1)
         self.overall_bar.setValue(index - 1)
-        self.log_view.append(f"[info] starting ({index}/{total}): {url}")
+        self.log_view.append(
+            "[info] "
+            + self.tr("starting ({index}/{total}): {url}").format(
+                index=index, total=total, url=url
+            )
+        )
         self.progress_bar.setRange(0, 0)
         self.progress_bar.setValue(0)
         self._refresh_queue_label()
@@ -423,7 +479,9 @@ class MainWindow(QMainWindow):
     def _on_item_finished(self, _index: int, output_path: Path | None) -> None:
         if output_path:
             self._queue_completed += 1
-            self.log_view.append(f"[info] saved: {output_path}")
+            self.log_view.append(
+                "[info] " + self.tr("saved: {output_path}").format(output_path=output_path)
+            )
         self._current_item_fraction = 0.0
         self.overall_bar.setValue(self._queue_completed)
         self._refresh_queue_label()
@@ -432,34 +490,36 @@ class MainWindow(QMainWindow):
         self._queue_timer.stop()
         n = len(output_paths)
         if n:
-            self.log_view.append(f"[info] queue done — {n} file(s) saved")
+            self.log_view.append("[info] " + self.tr("queue done — %n file(s) saved", "", n))
         if self._state == WorkerState.CANCELLED:
             if n:
                 self._notify(
-                    "Downloads cancelled",
-                    f"Partial: {n} file(s) saved before cancel.",
+                    self.tr("Downloads cancelled"),
+                    self.tr("Partial: %n file(s) saved before cancel.", "", n),
                     QSystemTrayIcon.MessageIcon.Warning,
                 )
             return
         if n:
             self._notify(
-                "Downloads complete",
-                f"{n} file(s) saved to {self.output_edit.text()}",
+                self.tr("Downloads complete"),
+                self.tr("%n file(s) saved to {path}", "", n).format(path=self.output_edit.text()),
             )
 
     def _on_failed(self, kind: ErrorKind, message: str, traceback_str: str) -> None:
         self._queue_timer.stop()
+        error_label = self.tr("Error:")
         self.status_label.setText(
-            f"<span style='color:{_COLOR_ERROR};font-weight:bold;'>Error:</span> {message}"
+            f"<span style='color:{_COLOR_ERROR};font-weight:bold;'>{error_label}</span> {message}"
         )
         self.log_view.append(f"[error] {message}")
         hint = ""
         if kind == ErrorKind.EXTRACTOR:
-            hint = (
-                "\n\nThis often means yt-dlp needs an update — the site's format may have changed."
+            hint = "\n\n" + self.tr(
+                "This often means yt-dlp needs an update"
+                " — the site's format may have changed."
             )
         self._notify(
-            "Download failed",
+            self.tr("Download failed"),
             message,
             QSystemTrayIcon.MessageIcon.Critical,
         )
@@ -476,10 +536,13 @@ class MainWindow(QMainWindow):
             eta_txt = _fmt_duration(int(eta))
         else:
             eta_txt = "—"
+        queue_label = self.tr("Queue:")
+        elapsed_label = self.tr("elapsed")
+        eta_label = self.tr("ETA")
         self.overall_label.setText(
-            f"<b>Queue:</b> {self._queue_completed} / {self._queue_total}"
-            f" &nbsp;·&nbsp; elapsed {_fmt_duration(int(elapsed))}"
-            f" &nbsp;·&nbsp; ETA {eta_txt}"
+            f"<b>{queue_label}</b> {self._queue_completed} / {self._queue_total}"
+            f" &nbsp;·&nbsp; {elapsed_label} {_fmt_duration(int(elapsed))}"
+            f" &nbsp;·&nbsp; {eta_label} {eta_txt}"
         )
 
     # --- Update check -------------------------------------------------------
@@ -506,7 +569,9 @@ class MainWindow(QMainWindow):
     def _start_update_check(self, *, manual: bool) -> None:
         if self._update_thread is not None:
             if manual:
-                QMessageBox.information(self, APP_NAME, "An update check is already in progress.")
+                QMessageBox.information(
+                    self, APP_NAME, self.tr("An update check is already in progress.")
+                )
             return
 
         self._update_check_manual = manual
@@ -535,7 +600,9 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(
                     self,
                     APP_NAME,
-                    f"You're up to date.\n\nCurrent version: {info.current}",
+                    self.tr("You're up to date.\n\nCurrent version: {version}").format(
+                        version=info.current
+                    ),
                 )
             return
 
@@ -548,26 +615,33 @@ class MainWindow(QMainWindow):
         manual = self._update_check_manual
         self._cleanup_update_thread()
         if manual:
-            QMessageBox.warning(self, APP_NAME, f"Could not check for updates:\n{message}")
+            QMessageBox.warning(
+                self,
+                APP_NAME,
+                self.tr("Could not check for updates:\n{message}").format(message=message),
+            )
 
     def _prompt_update(self, info: UpdateInfo, *, manual: bool) -> None:
         box = QMessageBox(self)
         box.setWindowTitle(APP_NAME)
         box.setIcon(QMessageBox.Icon.Information)
         box.setTextFormat(Qt.TextFormat.RichText)
+        new_version_label = self.tr("A new version is available.")
+        current_line = self.tr("Current: {current}").format(current=info.current)
+        latest_line = self.tr("Latest: {latest}").format(latest=f"<b>{info.latest}</b>")
         box.setText(
-            f"<b>A new version is available.</b><br><br>"
-            f"Current: {info.current}<br>"
-            f"Latest: <b>{info.latest}</b>"
+            f"<b>{new_version_label}</b><br><br>{current_line}<br>{latest_line}"
         )
         notes = info.notes.strip()
         if notes:
             box.setInformativeText(notes[:600] + ("…" if len(notes) > 600 else ""))
-        view_btn = box.addButton("View release", QMessageBox.ButtonRole.AcceptRole)
-        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
+        view_btn = box.addButton(self.tr("View release"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(self.tr("Later"), QMessageBox.ButtonRole.RejectRole)
         skip_btn = None
         if not manual:
-            skip_btn = box.addButton("Skip this version", QMessageBox.ButtonRole.DestructiveRole)
+            skip_btn = box.addButton(
+                self.tr("Skip this version"), QMessageBox.ButtonRole.DestructiveRole
+            )
         box.setDefaultButton(view_btn)
         box.exec()
 

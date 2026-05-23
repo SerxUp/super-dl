@@ -59,6 +59,16 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Compile translations
+        run: |
+          pyside6-lupdate super_dl/ui/main_window.py super_dl/ui/about_dialog.py -ts super_dl/resources/i18n/super_dl_en.ts super_dl/resources/i18n/super_dl_es.ts super_dl/resources/i18n/super_dl_fr.ts
+          pyside6-lrelease super_dl/resources/i18n/super_dl_en.ts super_dl/resources/i18n/super_dl_es.ts super_dl/resources/i18n/super_dl_fr.ts
+
+      - name: Verify .ts sources are up to date
+        if: runner.os == 'Linux'
+        shell: bash
+        run: git diff --exit-code super_dl/resources/i18n/*.ts || (echo "Run pyside6-lupdate locally and commit the .ts changes"; exit 1)
+
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen

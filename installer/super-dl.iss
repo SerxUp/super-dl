@@ -3,7 +3,7 @@
 ; CI passes /DAppVersion from the tag; local builds fall back to the value below.
 
 #ifndef AppVersion
-  #define AppVersion "0.2.2"
+  #define AppVersion "0.3.0"
 #endif
 
 [Setup]
@@ -27,8 +27,21 @@ LicenseFile=..\LICENSE
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "french";  MessagesFile: "compiler:Languages\French.isl"
+
+[CustomMessages]
+english.DesktopIcon=Create a &desktop shortcut
+spanish.DesktopIcon=Crear acceso directo en el &escritorio
+french.DesktopIcon=Créer un raccourci sur le &bureau
+english.LaunchApp=Launch super-dl
+spanish.LaunchApp=Iniciar super-dl
+french.LaunchApp=Lancer super-dl
+
 [Tasks]
-Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:DesktopIcon}"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
 Source: "..\dist\super-dl.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -39,4 +52,4 @@ Name: "{group}\Uninstall super-dl"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\super-dl";     Filename: "{app}\super-dl.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\super-dl.exe"; Description: "Launch super-dl"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\super-dl.exe"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
