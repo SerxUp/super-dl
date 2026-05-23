@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication
 
 from super_dl import APP_NAME
 from super_dl.core.config import AppConfig
+from super_dl.core.i18n import install_translators, resolve_language
 from super_dl.core.logging_setup import setup_logging
 from super_dl.ui.main_window import MainWindow
 
@@ -25,6 +26,9 @@ def run(argv: list[str]) -> int:
     app.setApplicationName(APP_NAME)
     app.setOrganizationName(APP_NAME)
     app.setWindowIcon(_load_app_icon())
+
+    lang = resolve_language(config.ui_language)
+    app.setProperty("_super_dl_translators", install_translators(app, lang))
 
     window = MainWindow(config)
     window.show()
