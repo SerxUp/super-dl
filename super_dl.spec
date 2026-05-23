@@ -12,6 +12,13 @@ icon_path = "super_dl/resources/icon.icns" if is_darwin else "super_dl/resources
 
 datas = collect_data_files("imageio_ffmpeg")
 datas += [("super_dl/resources/icon.ico", "super_dl/resources")]
+datas += [("super_dl/resources/i18n/*.qm", "super_dl/resources/i18n")]
+# Qt's own translations (qtbase_*.qm) for stock dialog/button text.
+datas += [
+    (src, dst)
+    for (src, dst) in collect_data_files("PySide6")
+    if "translations" in dst.replace("\\", "/")
+]
 if is_darwin:
     datas += [("super_dl/resources/icon.icns", "super_dl/resources")]
 
