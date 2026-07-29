@@ -3,7 +3,7 @@
 Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp/yt-dlp), written in Python with PySide6.
 
 ## Stack
-- Python 3.10+
+- Python 3.14+
 - PySide6 (Qt for Python, LGPL)
 - yt-dlp — imported as a library, not subprocessed
 - imageio-ffmpeg — bundles a per-platform ffmpeg binary, no system install needed

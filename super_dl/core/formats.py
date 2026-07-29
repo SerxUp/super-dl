@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class FormatPreset(str, Enum):
+class FormatPreset(StrEnum):
     BEST_VIDEO_AUDIO = "best_video_audio"
     BEST_AUDIO = "best_audio"
     MP4_720P = "mp4_720p"
