@@ -11,18 +11,18 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [{ name = "Sergio Adam" }]
 dependencies = [
-    "PySide6>=6.6",
-    "platformdirs>=4.0",
-    "yt-dlp>=2024.12.13",
-    "imageio-ffmpeg>=0.5",
+    "PySide6>=6.11",
+    "platformdirs>=4.11",
+    "yt-dlp>=2026.7.4",
+    "imageio-ffmpeg>=0.6",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
-    "pytest-qt>=4.4",
-    "ruff>=0.5",
-    "pyinstaller>=6.0",
+    "pytest>=9.0",
+    "pytest-qt>=4.5",
+    "ruff>=0.16",
+    "pyinstaller>=6.21",
 ]
 
 [project.gui-scripts]
