@@ -12,6 +12,7 @@ from pathlib import Path
 
 import yt_dlp
 from PySide6.QtCore import QObject, Signal, Slot
+from yt_dlp.cookies import CookieLoadError
 from yt_dlp.utils import DownloadCancelled, DownloadError, ExtractorError
 from yt_dlp.utils import Popen as _YdlPopen
 
@@ -35,6 +36,7 @@ class ErrorKind(Enum):
     EXTRACTOR = auto()   # site/extractor broke — yt-dlp likely needs an update
     NETWORK = auto()
     FILESYSTEM = auto()
+    COOKIES = auto()     # browser cookie database unreadable / locked / encrypted
     UNKNOWN = auto()
 
 
@@ -44,6 +46,7 @@ class DownloadRequest:
     format_spec: FormatSpec
     output_dir: Path
     subfolder_per_url: bool = False
+    cookies_from_browser: str = ""
 
 
 _SUBFOLDER_TEMPLATE = "%(playlist_title,channel,uploader,title)s"
@@ -54,6 +57,11 @@ def _classify(exc: BaseException) -> ErrorKind:
     seen: set[int] = set()
     while cur is not None and id(cur) not in seen:
         seen.add(id(cur))
+        # Checked before OSError/ExtractorError: yt-dlp wraps every cookie
+        # failure (locked DB, unsupported encryption) into CookieLoadError, and
+        # the underlying cause is often an OSError we'd otherwise misreport.
+        if isinstance(cur, CookieLoadError):
+            return ErrorKind.COOKIES
         if isinstance(cur, ExtractorError):
             return ErrorKind.EXTRACTOR
         if isinstance(cur, urllib.error.URLError):
@@ -62,6 +70,8 @@ def _classify(exc: BaseException) -> ErrorKind:
             return ErrorKind.FILESYSTEM
         cur = cur.__cause__ or cur.__context__
     msg = str(exc).lower()
+    if "failed to load cookies" in msg:
+        return ErrorKind.COOKIES
     if "http error" in msg or "unable to download" in msg or "name or service" in msg:
         return ErrorKind.NETWORK
     return ErrorKind.UNKNOWN
@@ -186,6 +196,14 @@ class YtDlpWorker(QObject):
                 "fragment_retries": 2,
                 "extractor_retries": 2,
             }
+            if request.cookies_from_browser:
+                # yt-dlp spec tuple: (browser, profile, keyring, container)
+                ydl_opts["cookiesfrombrowser"] = (
+                    request.cookies_from_browser,
+                    None,
+                    None,
+                    None,
+                )
             if request.format_spec.merge_output_format:
                 ydl_opts["merge_output_format"] = request.format_spec.merge_output_format
             if request.format_spec.postprocessors:
@@ -206,7 +224,7 @@ class YtDlpWorker(QObject):
                     self.finished.emit(completed)
                     return
                 self.item_finished.emit(idx, None)
-                if isinstance(e, (DownloadError, ExtractorError, OSError)):
+                if isinstance(e, (DownloadError, ExtractorError, CookieLoadError, OSError)):
                     self._fail(_classify(e), str(e))
                 else:
                     self._fail(ErrorKind.UNKNOWN, str(e) or type(e).__name__)

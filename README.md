@@ -21,6 +21,7 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 - Format presets: best video+audio, audio-only, or custom yt-dlp format string
 - Live progress bar with speed and ETA
 - Cancel mid-download
+- Optional browser cookie extraction (Firefox, Chrome, Edge, Brave, …) for private, age-restricted or members-only content
 - Bundled ffmpeg via `imageio-ffmpeg` — no system install needed
 - Config persists between sessions (output folder, last-used format)
 
@@ -75,6 +76,16 @@ super-dl
 2. Choose a format preset (or enter a custom yt-dlp format string).
 3. Pick an output folder.
 4. Click **Download**.
+
+### Cookies
+
+The **Cookies** dropdown maps to yt-dlp's `--cookies-from-browser`: pick a browser and the download runs as the account you're signed into there. Use it for age-restricted or region-locked videos, private/unlisted/members-only content, anything behind a login or paid subscription, and "confirm you're not a bot" errors.
+
+Caveats:
+
+- Close the browser first — Chromium-based browsers lock their cookie database while running.
+- On Windows, recent Chrome and Edge builds encrypt cookies with app-bound encryption and cannot be read at all. Firefox is the most reliable choice.
+- Cookies are read locally and only sent to the site being downloaded from, but they do grant access to your accounts. Leave the setting at **Don't use cookies** unless a download needs it.
 
 ## Development
 
