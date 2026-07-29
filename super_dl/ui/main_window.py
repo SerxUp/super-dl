@@ -177,9 +177,8 @@ class MainWindow(QMainWindow):
         self.cookie_combo = QComboBox()
         self.cookie_combo.addItem(self.tr("Don't use cookies"), NO_BROWSER)
         for browser in available_browsers():
-            self.cookie_combo.addItem(
-                self.tr("{browser}").format(browser=display_name(browser)), browser
-            )
+            # Brand names, not translatable — no tr() wrapper.
+            self.cookie_combo.addItem(display_name(browser), browser)
         cookie_row.addWidget(self.cookie_combo)
         cookie_hint = QLabel(
             self.tr("Reuse a browser login for private or age-restricted videos")
