@@ -16,7 +16,13 @@ Create a GitHub pull request for the current branch.
    - `fix/*` → `bug`
    - Any other prefix → no `--label` flag; ask the user if a label is wanted.
 
-   If the user passed an explicit label in `ARGUMENTS` (e.g. `label 'major feature'`), use that instead of the branch-derived default.
+   Then let the diff override the branch prefix. Branches use only `feat/` and `fix/`, so the prefix says nothing about a version-bump PR:
+   - Diff is only dependency or interpreter version bumps — `pyproject.toml` pins, lockfiles, `requires-python`, ruff `target-version`, CI `python-version`, README/CLAUDE.md version lines, plus whatever lint or API fixes the bump forces → `Dependencies`, even on `feat/*`.
+   - Diff adds or changes user-facing behaviour alongside the bumps → keep the branch-derived label; the bump is incidental.
+
+   State the override and its reason when returning the PR URL, so a wrong call is easy to spot and swap.
+
+   If the user passed an explicit label in `ARGUMENTS` (e.g. `label 'major feature'`), use that instead — it beats both the branch prefix and the diff override.
 
 5. Run:
    ```

@@ -10,5 +10,6 @@ dist/
 .venv/
 venv/
 .env
+.claude/*.local.json
 .claude/settings.local.json
 .vscode/settings.json
