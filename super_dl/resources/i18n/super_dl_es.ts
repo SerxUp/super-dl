@@ -72,197 +72,237 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../ui/main_window.py" line="125"/>
+        <location filename="../../ui/main_window.py" line="131"/>
         <source>URLs:</source>
         <translation>URLs:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="130"/>
+        <location filename="../../ui/main_window.py" line="136"/>
         <source>One URL per line
 https://...</source>
         <translation>Una URL por línea
 https://...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="137"/>
+        <location filename="../../ui/main_window.py" line="143"/>
         <source>Format:</source>
         <translation>Formato:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="145"/>
+        <location filename="../../ui/main_window.py" line="151"/>
         <source>e.g. bv[height&lt;=720]+ba</source>
         <translation>ej. bv[height&lt;=720]+ba</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="150"/>
+        <location filename="../../ui/main_window.py" line="156"/>
         <source>Output:</source>
         <translation>Destino:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="154"/>
+        <location filename="../../ui/main_window.py" line="160"/>
         <source>Browse…</source>
         <translation>Examinar…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="162"/>
+        <location filename="../../ui/main_window.py" line="168"/>
         <source>Create subfolder per URL (playlist / channel / title)</source>
         <translation>Crear subcarpeta por URL (lista / canal / título)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="169"/>
-        <location filename="../../ui/main_window.py" line="381"/>
-        <location filename="../../ui/main_window.py" line="401"/>
-        <location filename="../../ui/main_window.py" line="412"/>
-        <location filename="../../ui/main_window.py" line="418"/>
+        <location filename="../../ui/main_window.py" line="175"/>
+        <source>Cookies:</source>
+        <translation>Cookies:</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="178"/>
+        <source>Don&apos;t use cookies</source>
+        <translation>No usar cookies</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="184"/>
+        <source>Reuse a browser login for private or age-restricted videos</source>
+        <translation>Reutiliza la sesión del navegador para vídeos privados o restringidos por edad</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="195"/>
+        <location filename="../../ui/main_window.py" line="447"/>
+        <location filename="../../ui/main_window.py" line="467"/>
+        <location filename="../../ui/main_window.py" line="478"/>
+        <location filename="../../ui/main_window.py" line="484"/>
         <source>Download</source>
         <translation>Descargar</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="189"/>
+        <location filename="../../ui/main_window.py" line="215"/>
         <source>Queue %v / %m</source>
         <translation>Cola %v / %m</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="209"/>
+        <location filename="../../ui/main_window.py" line="236"/>
+        <source>Send cookies from a browser you&apos;re already signed into, so yt-dlp downloads as your logged-in account.</source>
+        <translation>Envía las cookies de un navegador en el que ya has iniciado sesión, para que yt-dlp descargue como tu cuenta.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="240"/>
+        <source>Useful for: age-restricted or region-locked videos; private, unlisted or members-only content; anything behind a login or paid subscription; and &quot;confirm you&apos;re not a bot&quot; errors.</source>
+        <translation>Útil para: vídeos restringidos por edad o bloqueados por región; contenido privado, no listado o solo para miembros; cualquier cosa detrás de un inicio de sesión o suscripción de pago; y errores del tipo «confirma que no eres un robot».</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="245"/>
+        <source>Close the browser first — Chromium-based browsers lock their cookie database while running. On Windows, recent Chrome and Edge builds encrypt cookies so extraction can still fail; Firefox is the most reliable pick.</source>
+        <translation>Cierra primero el navegador: los navegadores basados en Chromium bloquean su base de datos de cookies mientras están abiertos. En Windows, las versiones recientes de Chrome y Edge cifran las cookies, así que la extracción puede fallar igualmente; Firefox es la opción más fiable.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="251"/>
+        <source>Cookies stay on this machine and are only sent to the site being downloaded from, but they do grant access to your accounts — leave this off unless a download needs it.</source>
+        <translation>Las cookies se quedan en este equipo y solo se envían al sitio del que se descarga, pero dan acceso a tus cuentas: déjalo desactivado salvo que una descarga lo necesite.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="260"/>
         <source>Best video + audio</source>
         <translation>Mejor vídeo + audio</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="210"/>
+        <location filename="../../ui/main_window.py" line="261"/>
         <source>MP4 up to 720p</source>
         <translation>MP4 hasta 720p</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="211"/>
+        <location filename="../../ui/main_window.py" line="262"/>
         <source>MP4 up to 1080p</source>
         <translation>MP4 hasta 1080p</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="212"/>
+        <location filename="../../ui/main_window.py" line="263"/>
         <source>Best audio only</source>
         <translation>Solo el mejor audio</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="213"/>
+        <location filename="../../ui/main_window.py" line="264"/>
         <source>MP3 (audio extract)</source>
         <translation>MP3 (extracción de audio)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="214"/>
+        <location filename="../../ui/main_window.py" line="265"/>
         <source>Custom format string</source>
         <translation>Cadena de formato personalizada</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="219"/>
+        <location filename="../../ui/main_window.py" line="270"/>
         <source>&amp;Options</source>
         <translation>&amp;Opciones</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="221"/>
+        <location filename="../../ui/main_window.py" line="272"/>
         <source>Check for &amp;updates…</source>
         <translation>Buscar &amp;actualizaciones…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="225"/>
+        <location filename="../../ui/main_window.py" line="276"/>
         <source>Check for updates on startup</source>
         <translation>Buscar actualizaciones al iniciar</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="231"/>
+        <location filename="../../ui/main_window.py" line="282"/>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="235"/>
+        <location filename="../../ui/main_window.py" line="286"/>
         <source>System default</source>
         <translation>Predeterminado del sistema</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="249"/>
+        <location filename="../../ui/main_window.py" line="300"/>
         <source>&amp;About {app}</source>
         <translation>&amp;Acerca de {app}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="261"/>
+        <location filename="../../ui/main_window.py" line="312"/>
         <source>Language change takes effect after restart.</source>
         <translation>El cambio de idioma se aplicará al reiniciar.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="315"/>
+        <location filename="../../ui/main_window.py" line="371"/>
         <source>Choose output directory</source>
         <translation>Elegir carpeta de destino</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="323"/>
+        <location filename="../../ui/main_window.py" line="379"/>
         <source>Cancelling…</source>
         <translation>Cancelando…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="333"/>
+        <location filename="../../ui/main_window.py" line="389"/>
         <source>Please enter at least one URL.</source>
         <translation>Introduce al menos una URL.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="341"/>
+        <location filename="../../ui/main_window.py" line="397"/>
         <source>Cannot create output directory:
 {error}</source>
         <translation>No se pudo crear la carpeta de destino:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="387"/>
-        <location filename="../../ui/main_window.py" line="392"/>
-        <location filename="../../ui/main_window.py" line="396"/>
+        <location filename="../../ui/main_window.py" line="427"/>
+        <source>using cookies from {browser}</source>
+        <translation>usando cookies de {browser}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="453"/>
+        <location filename="../../ui/main_window.py" line="458"/>
+        <location filename="../../ui/main_window.py" line="462"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="390"/>
+        <location filename="../../ui/main_window.py" line="456"/>
         <source>Fetching metadata…</source>
         <translation>Obteniendo metadatos…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="394"/>
+        <location filename="../../ui/main_window.py" line="460"/>
         <source>Downloading…</source>
         <translation>Descargando…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="399"/>
+        <location filename="../../ui/main_window.py" line="465"/>
         <source>Post-processing…</source>
         <translation>Postprocesando…</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="406"/>
+        <location filename="../../ui/main_window.py" line="472"/>
         <source>SUCCESS!</source>
         <translation>¡COMPLETADO!</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="422"/>
+        <location filename="../../ui/main_window.py" line="488"/>
         <source>Cancelled.</source>
         <translation>Cancelado.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="442"/>
+        <location filename="../../ui/main_window.py" line="508"/>
         <source>{downloaded} / {total}   {speed}   item ETA {eta}</source>
         <translation>{downloaded} / {total}   {speed}   restante {eta}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="452"/>
+        <location filename="../../ui/main_window.py" line="518"/>
         <source>{downloaded}   {speed}</source>
         <translation>{downloaded}   {speed}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="471"/>
+        <location filename="../../ui/main_window.py" line="537"/>
         <source>starting ({index}/{total}): {url}</source>
         <translation>iniciando ({index}/{total}): {url}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="483"/>
+        <location filename="../../ui/main_window.py" line="549"/>
         <source>saved: {output_path}</source>
         <translation>guardado: {output_path}</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="493"/>
+        <location filename="../../ui/main_window.py" line="559"/>
         <source>queue done — %n file(s) saved</source>
         <translation>
             <numerusform>cola completada — %n archivo guardado</numerusform>
@@ -270,12 +310,12 @@ https://...</translation>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="497"/>
+        <location filename="../../ui/main_window.py" line="563"/>
         <source>Downloads cancelled</source>
         <translation>Descargas canceladas</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="498"/>
+        <location filename="../../ui/main_window.py" line="564"/>
         <source>Partial: %n file(s) saved before cancel.</source>
         <translation>
             <numerusform>Parcial: %n archivo guardado antes de cancelar.</numerusform>
@@ -283,12 +323,12 @@ https://...</translation>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="504"/>
+        <location filename="../../ui/main_window.py" line="570"/>
         <source>Downloads complete</source>
         <translation>Descargas completadas</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="505"/>
+        <location filename="../../ui/main_window.py" line="571"/>
         <source>%n file(s) saved to {path}</source>
         <translation>
             <numerusform>%n archivo guardado en {path}</numerusform>
@@ -296,42 +336,47 @@ https://...</translation>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="510"/>
+        <location filename="../../ui/main_window.py" line="576"/>
         <source>Error:</source>
         <translation>Error:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="518"/>
+        <location filename="../../ui/main_window.py" line="584"/>
         <source>This often means yt-dlp needs an update — the site&apos;s format may have changed.</source>
         <translation>Esto suele significar que yt-dlp necesita actualizarse — es posible que el formato del sitio haya cambiado.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="522"/>
+        <location filename="../../ui/main_window.py" line="589"/>
+        <source>Cookies could not be read from the selected browser. Close the browser completely and retry; on Windows, recent Chrome and Edge builds encrypt cookies and cannot be read at all — try Firefox or turn cookies off.</source>
+        <translation>No se pudieron leer las cookies del navegador seleccionado. Cierra el navegador por completo y vuelve a intentarlo; en Windows, las versiones recientes de Chrome y Edge cifran las cookies y no se pueden leer en absoluto: prueba Firefox o desactiva las cookies.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="595"/>
         <source>Download failed</source>
         <translation>Descarga fallida</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="539"/>
+        <location filename="../../ui/main_window.py" line="612"/>
         <source>Queue:</source>
         <translation>Cola:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="540"/>
+        <location filename="../../ui/main_window.py" line="613"/>
         <source>elapsed</source>
         <translation>transcurrido</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="541"/>
+        <location filename="../../ui/main_window.py" line="614"/>
         <source>ETA</source>
         <translation>tiempo restante</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="573"/>
+        <location filename="../../ui/main_window.py" line="646"/>
         <source>An update check is already in progress.</source>
         <translation>Ya hay una comprobación de actualizaciones en curso.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="603"/>
+        <location filename="../../ui/main_window.py" line="676"/>
         <source>You&apos;re up to date.
 
 Current version: {version}</source>
@@ -340,39 +385,39 @@ Current version: {version}</source>
 Versión actual: {version}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="621"/>
+        <location filename="../../ui/main_window.py" line="694"/>
         <source>Could not check for updates:
 {message}</source>
         <translation>No se pudo comprobar si hay actualizaciones:
 {message}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="629"/>
+        <location filename="../../ui/main_window.py" line="702"/>
         <source>A new version is available.</source>
         <translation>Hay una nueva versión disponible.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="630"/>
+        <location filename="../../ui/main_window.py" line="703"/>
         <source>Current: {current}</source>
         <translation>Actual: {current}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="631"/>
+        <location filename="../../ui/main_window.py" line="704"/>
         <source>Latest: {latest}</source>
         <translation>Última: {latest}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="638"/>
+        <location filename="../../ui/main_window.py" line="711"/>
         <source>View release</source>
         <translation>Ver la versión</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="639"/>
+        <location filename="../../ui/main_window.py" line="712"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="643"/>
+        <location filename="../../ui/main_window.py" line="716"/>
         <source>Skip this version</source>
         <translation>Omitir esta versión</translation>
     </message>

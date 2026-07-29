@@ -33,6 +33,17 @@ def test_ui_language_roundtrip(tmp_path, monkeypatch):
     assert AppConfig.load().ui_language == "fr"
 
 
+def test_cookies_from_browser_defaults_to_empty(tmp_path, monkeypatch):
+    monkeypatch.setattr("super_dl.core.config.config_dir", lambda: tmp_path)
+    assert AppConfig.load().cookies_from_browser == ""
+
+
+def test_cookies_from_browser_roundtrip(tmp_path, monkeypatch):
+    monkeypatch.setattr("super_dl.core.config.config_dir", lambda: tmp_path)
+    AppConfig(cookies_from_browser="firefox").save()
+    assert AppConfig.load().cookies_from_browser == "firefox"
+
+
 def test_unknown_keys_are_ignored(tmp_path, monkeypatch):
     monkeypatch.setattr("super_dl.core.config.config_dir", lambda: tmp_path)
     (tmp_path / "config.json").write_text(

@@ -27,6 +27,12 @@ from PySide6.QtWidgets import (
 
 from super_dl import APP_NAME, __version__
 from super_dl.core.config import AppConfig
+from super_dl.core.cookies import (
+    NO_BROWSER,
+    available_browsers,
+    display_name,
+    normalize_browser,
+)
 from super_dl.core.downloader import (
     DownloadRequest,
     ErrorKind,
@@ -165,6 +171,26 @@ class MainWindow(QMainWindow):
         opt_row.addStretch(1)
         root.addLayout(opt_row)
 
+        cookie_row = QHBoxLayout()
+        cookie_label = QLabel(self.tr("Cookies:"))
+        cookie_row.addWidget(cookie_label)
+        self.cookie_combo = QComboBox()
+        self.cookie_combo.addItem(self.tr("Don't use cookies"), NO_BROWSER)
+        for browser in available_browsers():
+            # Brand names, not translatable — no tr() wrapper.
+            self.cookie_combo.addItem(display_name(browser), browser)
+        cookie_row.addWidget(self.cookie_combo)
+        cookie_hint = QLabel(
+            self.tr("Reuse a browser login for private or age-restricted videos")
+        )
+        cookie_hint.setEnabled(False)  # greyed: hint text, not an interactive widget
+        cookie_row.addWidget(cookie_hint, 1)
+        root.addLayout(cookie_row)
+
+        cookie_tip = self._cookies_tooltip()
+        for w in (cookie_label, self.cookie_combo, cookie_hint):
+            w.setToolTip(cookie_tip)
+
         action_row = QHBoxLayout()
         self.action_btn = QPushButton(self.tr("Download"))
         self.action_btn.clicked.connect(self._on_action)
@@ -203,6 +229,31 @@ class MainWindow(QMainWindow):
         root.addWidget(self.log_view, 1)
 
         self.setCentralWidget(central)
+
+    def _cookies_tooltip(self) -> str:
+        paragraphs = (
+            self.tr(
+                "Send cookies from a browser you're already signed into, so yt-dlp"
+                " downloads as your logged-in account."
+            ),
+            self.tr(
+                "Useful for: age-restricted or region-locked videos; private,"
+                " unlisted or members-only content; anything behind a login or paid"
+                " subscription; and \"confirm you're not a bot\" errors."
+            ),
+            self.tr(
+                "Close the browser first — Chromium-based browsers lock their cookie"
+                " database while running. On Windows, recent Chrome and Edge builds"
+                " encrypt cookies so extraction can still fail; Firefox is the most"
+                " reliable pick."
+            ),
+            self.tr(
+                "Cookies stay on this machine and are only sent to the site being"
+                " downloaded from, but they do grant access to your accounts — leave"
+                " this off unless a download needs it."
+            ),
+        )
+        return "<p>" + "</p><p>".join(paragraphs) + "</p>"
 
     def _preset_labels(self) -> list[str]:
         return [
@@ -268,6 +319,11 @@ class MainWindow(QMainWindow):
             self.format_combo.setCurrentIndex(idx)
         self.custom_edit.setText(self._config.custom_format)
         self.subfolder_check.setChecked(self._config.subfolder_per_url)
+        cookie_idx = self.cookie_combo.findData(
+            normalize_browser(self._config.cookies_from_browser)
+        )
+        if cookie_idx >= 0:
+            self.cookie_combo.setCurrentIndex(cookie_idx)
         self._on_preset_changed()
 
     def _setup_worker(self) -> None:
@@ -346,11 +402,13 @@ class MainWindow(QMainWindow):
         custom = self.custom_edit.text()
         spec = resolve_format(preset, custom)
         subfolder = self.subfolder_check.isChecked()
+        cookie_browser = normalize_browser(self.cookie_combo.currentData() or "")
 
         self._config.output_dir = str(out)
         self._config.format_preset = preset
         self._config.custom_format = custom
         self._config.subfolder_per_url = subfolder
+        self._config.cookies_from_browser = cookie_browser
 
         self._queue_total = len(urls)
         self._queue_completed = 0
@@ -363,6 +421,13 @@ class MainWindow(QMainWindow):
 
         self.log_view.clear()
         self.overall_label.setText("")
+        if cookie_browser:
+            self.log_view.append(
+                "[info] "
+                + self.tr("using cookies from {browser}").format(
+                    browser=display_name(cookie_browser)
+                )
+            )
         self._queue_timer.start()
         self.request_download.emit(
             DownloadRequest(
@@ -370,6 +435,7 @@ class MainWindow(QMainWindow):
                 format_spec=spec,
                 output_dir=out,
                 subfolder_per_url=subfolder,
+                cookies_from_browser=cookie_browser,
             )
         )
 
@@ -517,6 +583,13 @@ class MainWindow(QMainWindow):
             hint = "\n\n" + self.tr(
                 "This often means yt-dlp needs an update"
                 " — the site's format may have changed."
+            )
+        elif kind == ErrorKind.COOKIES:
+            hint = "\n\n" + self.tr(
+                "Cookies could not be read from the selected browser. Close the"
+                " browser completely and retry; on Windows, recent Chrome and Edge"
+                " builds encrypt cookies and cannot be read at all — try Firefox or"
+                " turn cookies off."
             )
         self._notify(
             self.tr("Download failed"),

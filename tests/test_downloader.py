@@ -37,6 +37,25 @@ def test_download_request_accepts_single_url_tuple(tmp_path: Path):
     assert len(req.urls) == 1
 
 
+def test_download_request_defaults_to_no_cookies(tmp_path: Path):
+    req = DownloadRequest(
+        urls=("https://example.com",),
+        format_spec=FormatSpec("b"),
+        output_dir=tmp_path,
+    )
+    assert req.cookies_from_browser == ""
+
+
+def test_download_request_carries_cookie_browser(tmp_path: Path):
+    req = DownloadRequest(
+        urls=("https://example.com",),
+        format_spec=FormatSpec("b"),
+        output_dir=tmp_path,
+        cookies_from_browser="firefox",
+    )
+    assert req.cookies_from_browser == "firefox"
+
+
 def test_worker_state_values_are_unique():
     seen = set()
     for s in WorkerState:
@@ -67,6 +86,30 @@ def test_classify_plain_oserror_is_filesystem():
 
 def test_classify_unknown_falls_through():
     assert _classify(ValueError("nope")) == ErrorKind.UNKNOWN
+
+
+def test_classify_cookie_load_error():
+    from yt_dlp.cookies import CookieLoadError
+
+    assert _classify(CookieLoadError("failed to load cookies")) == ErrorKind.COOKIES
+
+
+def test_classify_cookie_error_wins_over_wrapped_oserror():
+    from yt_dlp.cookies import CookieLoadError
+
+    try:
+        try:
+            raise PermissionError("cookie db locked")
+        except PermissionError:
+            raise CookieLoadError("failed to load cookies") from None
+    except CookieLoadError as e:
+        assert _classify(e) == ErrorKind.COOKIES
+    else:
+        pytest.fail("expected CookieLoadError")
+
+
+def test_classify_cookie_message_fallback():
+    assert _classify(RuntimeError("failed to load cookies")) == ErrorKind.COOKIES
 
 
 def test_classify_walks_cause_chain():
