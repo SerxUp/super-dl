@@ -20,6 +20,7 @@ from super_dl import (
     APP_NAME,
     __version__,
 )
+from super_dl.core.versions import dependency_versions, python_version, qt_version
 
 
 def _load_icon_pixmap(size: int = 64) -> QPixmap:
@@ -71,6 +72,8 @@ class AboutDialog(QDialog):
         ffmpeg_label = self.tr("bundled ffmpeg binary")
         paths_label = self.tr("cross-platform paths")
         license_label = self.tr("Licensed under LGPL-2.1 (inherited from PySide6).")
+        versions = dependency_versions()
+        runtime_html = f"Python {python_version()} &nbsp;&middot;&nbsp; Qt {qt_version()}"
         text.setText(
             f"<h2 style='margin:0'>{APP_NAME}</h2>"
             f"<p style='margin:4px 0'>{version_html}</p>"
@@ -83,15 +86,17 @@ class AboutDialog(QDialog):
             "</p>"
             f"<p style='margin:8px 0 2px'><b>{credits_label}</b></p>"
             "<ul style='margin:2px 0 0 16px;padding:0'>"
-            f"<li><a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a> — {engine_label}</li>"
-            f"<li><a href='https://doc.qt.io/qtforpython/'>PySide6</a> — {gui_label}</li>"
-            f"<li><a href='https://github.com/imageio/imageio-ffmpeg'>imageio-ffmpeg</a> — "
-            f"{ffmpeg_label}</li>"
-            f"<li><a href='https://github.com/platformdirs/platformdirs'>platformdirs</a> — "
-            f"{paths_label}</li>"
+            f"<li><a href='https://github.com/yt-dlp/yt-dlp'>yt-dlp</a> "
+            f"<b>{versions['yt-dlp']}</b> — {engine_label}</li>"
+            f"<li><a href='https://doc.qt.io/qtforpython/'>PySide6</a> "
+            f"<b>{versions['PySide6']}</b> — {gui_label}</li>"
+            f"<li><a href='https://github.com/imageio/imageio-ffmpeg'>imageio-ffmpeg</a> "
+            f"<b>{versions['imageio-ffmpeg']}</b> — {ffmpeg_label}</li>"
+            f"<li><a href='https://github.com/platformdirs/platformdirs'>platformdirs</a> "
+            f"<b>{versions['platformdirs']}</b> — {paths_label}</li>"
             "</ul>"
             "<p style='margin:8px 0 0;color:gray;font-size:small'>"
-            f"{license_label}"
+            f"{runtime_html}<br>{license_label}"
             "</p>"
         )
         header.addWidget(text, 1)
