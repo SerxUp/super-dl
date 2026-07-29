@@ -120,8 +120,8 @@ https://...</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="181"/>
-        <source>From {browser}</source>
-        <translation>Depuis {browser}</translation>
+        <source>{browser}</source>
+        <translation>{browser}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="185"/>

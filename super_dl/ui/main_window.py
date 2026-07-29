@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
         self.cookie_combo.addItem(self.tr("Don't use cookies"), NO_BROWSER)
         for browser in available_browsers():
             self.cookie_combo.addItem(
-                self.tr("From {browser}").format(browser=display_name(browser)), browser
+                self.tr("{browser}").format(browser=display_name(browser)), browser
             )
         cookie_row.addWidget(self.cookie_combo)
         cookie_hint = QLabel(

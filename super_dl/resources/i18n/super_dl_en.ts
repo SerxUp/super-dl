@@ -119,7 +119,7 @@ https://...</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="181"/>
-        <source>From {browser}</source>
+        <source>{browser}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
