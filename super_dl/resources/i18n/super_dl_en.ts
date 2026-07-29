@@ -4,67 +4,67 @@
 <context>
     <name>AboutDialog</name>
     <message>
-        <location filename="../../ui/about_dialog.py" line="42"/>
+        <location filename="../../ui/about_dialog.py" line="43"/>
         <source>About {app}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="60"/>
+        <location filename="../../ui/about_dialog.py" line="61"/>
         <source>Version {version}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="62"/>
+        <location filename="../../ui/about_dialog.py" line="63"/>
         <source>Lightweight cross-platform GUI wrapper around {ytdlp_link}.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="64"/>
+        <location filename="../../ui/about_dialog.py" line="65"/>
         <source>Created by {author}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="65"/>
+        <location filename="../../ui/about_dialog.py" line="66"/>
         <source>Homepage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="66"/>
+        <location filename="../../ui/about_dialog.py" line="67"/>
         <source>Report an issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="67"/>
+        <location filename="../../ui/about_dialog.py" line="68"/>
         <source>Releases</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="68"/>
+        <location filename="../../ui/about_dialog.py" line="69"/>
         <source>Credits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="69"/>
+        <location filename="../../ui/about_dialog.py" line="70"/>
         <source>download engine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="70"/>
+        <location filename="../../ui/about_dialog.py" line="71"/>
         <source>GUI toolkit (LGPL)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="71"/>
+        <location filename="../../ui/about_dialog.py" line="72"/>
         <source>bundled ffmpeg binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="72"/>
+        <location filename="../../ui/about_dialog.py" line="73"/>
         <source>cross-platform paths</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="73"/>
+        <location filename="../../ui/about_dialog.py" line="74"/>
         <source>Licensed under LGPL-2.1 (inherited from PySide6).</source>
         <translation type="unfinished"></translation>
     </message>

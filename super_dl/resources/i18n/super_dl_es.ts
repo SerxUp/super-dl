@@ -4,67 +4,67 @@
 <context>
     <name>AboutDialog</name>
     <message>
-        <location filename="../../ui/about_dialog.py" line="42"/>
+        <location filename="../../ui/about_dialog.py" line="43"/>
         <source>About {app}</source>
         <translation>Acerca de {app}</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="60"/>
+        <location filename="../../ui/about_dialog.py" line="61"/>
         <source>Version {version}</source>
         <translation>Versión {version}</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="62"/>
+        <location filename="../../ui/about_dialog.py" line="63"/>
         <source>Lightweight cross-platform GUI wrapper around {ytdlp_link}.</source>
         <translation>Interfaz gráfica ligera y multiplataforma para {ytdlp_link}.</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="64"/>
+        <location filename="../../ui/about_dialog.py" line="65"/>
         <source>Created by {author}</source>
         <translation>Creado por {author}</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="65"/>
+        <location filename="../../ui/about_dialog.py" line="66"/>
         <source>Homepage</source>
         <translation>Sitio web</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="66"/>
+        <location filename="../../ui/about_dialog.py" line="67"/>
         <source>Report an issue</source>
         <translation>Reportar un problema</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="67"/>
+        <location filename="../../ui/about_dialog.py" line="68"/>
         <source>Releases</source>
         <translation>Versiones</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="68"/>
+        <location filename="../../ui/about_dialog.py" line="69"/>
         <source>Credits</source>
         <translation>Créditos</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="69"/>
+        <location filename="../../ui/about_dialog.py" line="70"/>
         <source>download engine</source>
         <translation>motor de descarga</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="70"/>
+        <location filename="../../ui/about_dialog.py" line="71"/>
         <source>GUI toolkit (LGPL)</source>
         <translation>kit de interfaz (LGPL)</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="71"/>
+        <location filename="../../ui/about_dialog.py" line="72"/>
         <source>bundled ffmpeg binary</source>
         <translation>binario ffmpeg incluido</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="72"/>
+        <location filename="../../ui/about_dialog.py" line="73"/>
         <source>cross-platform paths</source>
         <translation>rutas multiplataforma</translation>
     </message>
     <message>
-        <location filename="../../ui/about_dialog.py" line="73"/>
+        <location filename="../../ui/about_dialog.py" line="74"/>
         <source>Licensed under LGPL-2.1 (inherited from PySide6).</source>
         <translation>Licencia LGPL-2.1 (heredada de PySide6).</translation>
     </message>
