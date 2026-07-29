@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
@@ -629,7 +629,7 @@ class MainWindow(QMainWindow):
                 last_dt = datetime.fromisoformat(last)
             except ValueError:
                 last_dt = None
-            if last_dt and datetime.now(timezone.utc) - last_dt < _UPDATE_CHECK_INTERVAL:
+            if last_dt and datetime.now(UTC) - last_dt < _UPDATE_CHECK_INTERVAL:
                 return
         self._start_update_check(manual=False)
 
@@ -665,7 +665,7 @@ class MainWindow(QMainWindow):
 
     def _on_update_finished(self, info: UpdateInfo) -> None:
         manual = self._update_check_manual
-        self._config.last_update_check_iso = datetime.now(timezone.utc).isoformat()
+        self._config.last_update_check_iso = datetime.now(UTC).isoformat()
         self._cleanup_update_thread()
 
         if not info.is_newer:

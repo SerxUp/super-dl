@@ -6,7 +6,7 @@
 
 Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp/yt-dlp). Paste a URL, pick a format, download. No system ffmpeg required.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge)](#requirements "Requirements")
+[![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue?style=for-the-badge)](#requirements "Requirements")
 [![PySide6](https://img.shields.io/badge/UI-PySide6-green?style=for-the-badge)](#stack "Stack")
 [![License: LGPL](https://img.shields.io/badge/license-LGPL-lightgrey?style=for-the-badge)](LICENSE "License")
 [![Release](https://img.shields.io/github/v/release/sergioadam/super-dl?color=brightgreen&label=Download&style=for-the-badge)](#installation "Installation")
@@ -27,7 +27,7 @@ Lightweight cross-platform GUI wrapper around [yt-dlp](https://github.com/yt-dlp
 
 ## Requirements
 
-- Python 3.10 or later
+- Python 3.14 or later
 - No system ffmpeg needed
 
 ## Installation
