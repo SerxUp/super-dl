@@ -117,6 +117,11 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      # Before download-artifact: checkout cleans the workspace.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -124,10 +129,26 @@ jobs:
       - name: List artifacts
         run: ls -R artifacts
 
+      # Auto-releases from yt-dlp-release.yml have no PRs for the generated
+      # notes to list, so call out the yt-dlp floor change explicitly.
+      - name: Note yt-dlp update
+        id: notes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          floor() { git show "$1:pyproject.toml" | sed -nE 's/.*"yt-dlp(\[[^]]*\])?>=([^"]+)".*/\2/p'; }
+          prev=$(git describe --tags --abbrev=0 --match 'v*' "$TAG^" 2>/dev/null || true)
+          cur=$(floor "$TAG")
+          old=$(if [ -n "$prev" ]; then floor "$prev"; fi)
+          if [ -n "$cur" ] && [ "$cur" != "$old" ]; then
+            printf 'body<<EOF\nUpdated yt-dlp to %s\n\nEOF\n' "$cur" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
+          body: ${{ steps.notes.outputs.body }}
           generate_release_notes: true
           draft: false
           prerelease: false
