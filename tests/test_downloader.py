@@ -70,6 +70,41 @@ def test_cancel_sets_event(qtbot):  # qtbot provides a QApplication
     assert w._cancel_event.is_set()
 
 
+class _FakeMergingYoutubeDL:
+    """Replays the hook order yt-dlp uses for a bv+ba download that gets merged."""
+
+    def __init__(self, opts: dict) -> None:
+        self._opts = opts
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc) -> bool:
+        return False
+
+    def download(self, urls: list[str]) -> None:
+        out = Path(self._opts["outtmpl"]).parent
+        for hook in self._opts["progress_hooks"]:
+            hook({"status": "finished", "filename": str(out / "clip.f251.webm")})
+        for hook in self._opts["post_hooks"]:
+            hook(str(out / "clip.webm"))
+
+
+def test_worker_reports_merged_output_not_intermediate(qtbot, tmp_path: Path, monkeypatch):
+    import yt_dlp
+
+    monkeypatch.setattr(yt_dlp, "YoutubeDL", _FakeMergingYoutubeDL)
+    w = YtDlpWorker()
+    req = DownloadRequest(
+        urls=("https://example.com/v",),
+        format_spec=FormatSpec("bv*+ba/b"),
+        output_dir=tmp_path,
+    )
+    with qtbot.waitSignal(w.finished) as blocker:
+        w.start(req)
+    assert blocker.args == [[tmp_path / "clip.webm"]]
+
+
 def test_classify_extractor_error():
     from yt_dlp.utils import ExtractorError
 
