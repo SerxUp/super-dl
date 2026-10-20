@@ -1,4 +1,4 @@
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 APP_NAME = "Super DL"
 APP_AUTHOR = "Sergio A."
 APP_HOMEPAGE = "https://github.com/SerxUp/super-dl"
