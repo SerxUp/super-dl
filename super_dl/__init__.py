@@ -1,6 +1,6 @@
 __version__ = "0.4.0"
 APP_NAME = "Super DL"
-APP_AUTHOR = "Sergio Adam"
+APP_AUTHOR = "Sergio A."
 APP_HOMEPAGE = "https://github.com/SerxUp/super-dl"
 APP_ISSUES_URL = "https://github.com/SerxUp/super-dl/issues"
 GITHUB_REPO = "SerxUp/super-dl"

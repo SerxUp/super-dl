@@ -150,11 +150,10 @@ class YtDlpWorker(QObject):
             self._set_state(WorkerState.EXTRACTING)
             captured: list[Path | None] = [None]
 
-            def progress_hook(d: dict, _captured: list = captured) -> None:
+            def progress_hook(d: dict) -> None:
                 if self._cancel_event.is_set():
                     raise DownloadCancelled
-                status = d.get("status")
-                if status == "downloading":
+                if d.get("status") == "downloading":
                     if self._state != WorkerState.DOWNLOADING:
                         self._set_state(WorkerState.DOWNLOADING)
                     total = d.get("total_bytes") or d.get("total_bytes_estimate")
@@ -164,16 +163,18 @@ class YtDlpWorker(QObject):
                         d.get("speed"),
                         d.get("eta"),
                     )
-                elif status == "finished":
-                    fp = d.get("filename")
-                    if fp:
-                        _captured[0] = Path(fp)
 
             def postprocessor_hook(d: dict) -> None:
                 if self._cancel_event.is_set():
                     raise DownloadCancelled
                 if d.get("status") == "started":
                     self._set_state(WorkerState.POSTPROCESSING)
+
+            # Runs after merge/extract-audio/move, so this is the file that
+            # survives — the progress hook's "finished" filename is a per-format
+            # intermediate that yt-dlp deletes once formats are merged.
+            def post_hook(filepath: str, _captured: list = captured) -> None:
+                _captured[0] = Path(filepath)
 
             outtmpl_path = (
                 request.output_dir / _SUBFOLDER_TEMPLATE / "%(title)s.%(ext)s"
@@ -186,6 +187,7 @@ class YtDlpWorker(QObject):
                 "ffmpeg_location": ffmpeg_path(),
                 "progress_hooks": [progress_hook],
                 "postprocessor_hooks": [postprocessor_hook],
+                "post_hooks": [post_hook],
                 "logger": _YdlLogAdapter(self.log_line.emit),
                 "noprogress": True,
                 "quiet": True,
@@ -195,6 +197,9 @@ class YtDlpWorker(QObject):
                 "retries": 2,
                 "fragment_retries": 2,
                 "extractor_retries": 2,
+                # yt-dlp enables only deno by default; accept whichever runtime
+                # the user has so YouTube's JS challenges can be solved.
+                "js_runtimes": {"deno": {}, "node": {}, "bun": {}},
             }
             if request.cookies_from_browser:
                 # yt-dlp spec tuple: (browser, profile, keyring, container)
