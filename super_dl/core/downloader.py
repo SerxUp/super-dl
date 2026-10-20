@@ -195,6 +195,9 @@ class YtDlpWorker(QObject):
                 "retries": 2,
                 "fragment_retries": 2,
                 "extractor_retries": 2,
+                # yt-dlp enables only deno by default; accept whichever runtime
+                # the user has so YouTube's JS challenges can be solved.
+                "js_runtimes": {"deno": {}, "node": {}, "bun": {}},
             }
             if request.cookies_from_browser:
                 # yt-dlp spec tuple: (browser, profile, keyring, container)
