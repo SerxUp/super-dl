@@ -1,6 +1,7 @@
 """Tests for downloader internals — no network calls."""
 from __future__ import annotations
 
+import os
 import urllib.error
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from super_dl.core.downloader import (
     WorkerState,
     YtDlpWorker,
     _classify,
+    prune_unresolvable_path_entries,
 )
 from super_dl.core.formats import FormatSpec
 
@@ -159,3 +161,26 @@ def test_classify_walks_cause_chain():
         assert _classify(wrapped) == ErrorKind.EXTRACTOR
     else:
         pytest.fail("expected RuntimeError")
+
+
+def test_prune_drops_unresolvable_path_entries(monkeypatch, tmp_path: Path):
+    good = tmp_path / "good"
+    untrusted = tmp_path / "untrusted"
+    monkeypatch.setenv("PATH", os.pathsep.join([str(good), str(untrusted)]))
+    real_resolve = Path.resolve
+
+    def fake_resolve(self, strict=False):
+        if self == untrusted:
+            raise OSError("The path cannot be traversed (WinError 448)")
+        return real_resolve(self, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", fake_resolve)
+    prune_unresolvable_path_entries()
+    assert os.environ["PATH"] == str(good)
+
+
+def test_prune_leaves_resolvable_path_untouched(monkeypatch, tmp_path: Path):
+    original = os.pathsep.join([str(tmp_path / "a"), "", str(tmp_path / "b")])
+    monkeypatch.setenv("PATH", original)
+    prune_unresolvable_path_entries()
+    assert os.environ["PATH"] == original
