@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication
 
 from super_dl import APP_NAME
 from super_dl.core.config import AppConfig
+from super_dl.core.downloader import prune_unresolvable_path_entries
 from super_dl.core.i18n import install_translators, resolve_language
 from super_dl.core.logging_setup import setup_logging
 from super_dl.ui.main_window import MainWindow
@@ -20,6 +21,7 @@ def _load_app_icon() -> QIcon:
 
 def run(argv: list[str]) -> int:
     setup_logging()
+    prune_unresolvable_path_entries()
     config = AppConfig.load()
 
     app = QApplication(argv)

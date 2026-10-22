@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import os
 import threading
 import traceback
 import urllib.error
@@ -75,6 +76,26 @@ def _classify(exc: BaseException) -> ErrorKind:
     if "http error" in msg or "unable to download" in msg or "name or service" in msg:
         return ErrorKind.NETWORK
     return ErrorKind.UNKNOWN
+
+
+def prune_unresolvable_path_entries() -> None:
+    """Drop PATH entries that can't be resolved.
+
+    yt-dlp's JS-runtime lookup realpath()s every PATH entry without catching
+    OSError, so one entry Windows refuses to traverse aborts every YouTube
+    extraction. Seen with nvm-windows' user-created `.nodejs` junction, which
+    Windows' redirection trust policy rejects with WinError 448.
+    """
+    kept: list[str] = []
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if entry:
+            try:
+                Path(entry).resolve()
+            except OSError as e:
+                logger.warning("Ignoring unresolvable PATH entry %s: %s", entry, e)
+                continue
+        kept.append(entry)
+    os.environ["PATH"] = os.pathsep.join(kept)
 
 
 class _YdlLogAdapter:
