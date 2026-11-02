@@ -129,8 +129,8 @@ jobs:
       - name: List artifacts
         run: ls -R artifacts
 
-      # Auto-releases from yt-dlp-release.yml have no PRs for the generated
-      # notes to list, so call out the yt-dlp floor change explicitly.
+      # Generated notes only list PR titles, which needn't mention a yt-dlp
+      # floor change (e.g. a manual bump inside a feature PR), so call it out.
       - name: Note yt-dlp update
         id: notes
         env:

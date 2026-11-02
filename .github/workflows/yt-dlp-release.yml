@@ -8,8 +8,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # push the bump commit and tag
-  actions: write   # dispatch build.yml
+  contents: write       # push the bump branch and tag
+  pull-requests: write  # open and merge the bump PR
+  actions: write        # dispatch build.yml
 
 concurrency:
   group: yt-dlp-release
@@ -70,16 +71,29 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: pytest
 
-      - name: Commit, tag, and push
+      # main's ruleset rejects direct pushes but needs no approvals or checks,
+      # so the bump goes through a PR that is merged straight away.
+      - name: Merge bump PR and tag
         env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.bump.outputs.version }}
           YTDLP: ${{ steps.bump.outputs.ytdlp }}
         run: |
+          branch="feat/yt-dlp-$YTDLP"
+          title="Bump yt-dlp to $YTDLP and version to $VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Bump yt-dlp to $YTDLP and version to $VERSION"
-          git tag -a "v$VERSION" -m "$VERSION"
-          git push --atomic origin HEAD:main "v$VERSION"
+          git switch -c "$branch"
+          git commit -am "$title"
+          git push --force origin "$branch"
+          url=$(gh pr create --base main --head "$branch" --title "$title" \
+            --body "Automated by the yt-dlp release workflow.")
+          gh pr merge "$url" --squash
+          git push origin --delete "$branch"
+          sha=$(gh pr view "$url" --json mergeCommit --jq .mergeCommit.oid)
+          git fetch origin main
+          git tag -a "v$VERSION" -m "$VERSION" "$sha"
+          git push origin "v$VERSION"
 
       # A tag pushed with GITHUB_TOKEN doesn't trigger build.yml's tag push
       # event; workflow_dispatch is the exception GitHub allows.
